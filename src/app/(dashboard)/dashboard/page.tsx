@@ -12,13 +12,13 @@ export default function DashboardExecutivePage() {
   const [isSyncingNode, setIsSyncingNode] = useState<string | null>(null);
   const [slideIndex, setSlideIndex] = useState(0);
 
-  // 5 Connected Bank Nodes with Distinct Theme Color Tags
+  // 5 Connected Bank Nodes with Distinct High-Contrast Theme Color Tags
   const [nodes, setNodes] = useState([
-    { id: '1', name: 'GTBank PLC', cat: 'Commercial', bal: 14250000, ping: 12, status: 'active', color: '#2E3A2F', tagLabel: 'Primary' },
-    { id: '2', name: 'Stanbic IBTC', cat: 'Investment', bal: 8400000, ping: 14, status: 'active', color: '#8EA27E', tagLabel: 'Investment' },
-    { id: '3', name: 'Kuda Bank MFB', cat: 'Digital MFB', bal: 2200000, ping: 8, status: 'active', color: '#6B7F5B', tagLabel: 'Digital' },
-    { id: '4', name: 'Access Bank PLC', cat: 'Commercial', bal: 1150000, ping: 19, status: 'active', color: '#C96F4F', tagLabel: 'Commercial' },
-    { id: '5', name: 'Zenith Bank PLC', cat: 'Commercial', bal: 850000, ping: 24, status: 'active', color: '#B5987A', tagLabel: 'Payroll' },
+    { id: '1', name: 'GTBank PLC', cat: 'Commercial', bal: 14250000, ping: 12, status: 'active', color: '#F59E0B', tagColor: '#B45309', tagLabel: 'Primary' },
+    { id: '2', name: 'Stanbic IBTC', cat: 'Investment', bal: 8400000, ping: 14, status: 'active', color: '#8EA27E', tagColor: '#586C4B', tagLabel: 'Investment' },
+    { id: '3', name: 'Kuda Bank MFB', cat: 'Digital MFB', bal: 2200000, ping: 8, status: 'active', color: '#0EA5E9', tagColor: '#0284C7', tagLabel: 'Digital' },
+    { id: '4', name: 'Access Bank PLC', cat: 'Commercial', bal: 1150000, ping: 19, status: 'active', color: '#EA580C', tagColor: '#C2410C', tagLabel: 'Commercial' },
+    { id: '5', name: 'Zenith Bank PLC', cat: 'Commercial', bal: 850000, ping: 24, status: 'active', color: '#A855F7', tagColor: '#7E22CE', tagLabel: 'Payroll' },
   ]);
 
   const [subscriptions, setSubscriptions] = useState([
@@ -218,7 +218,7 @@ export default function DashboardExecutivePage() {
                         <span className="text-xs text-on-surface-variant">{node.cat}</span>
                         <span
                           className="px-2 py-0.2 text-[10px] font-bold rounded-md font-mono"
-                          style={{ backgroundColor: `${node.color}15`, color: node.color }}
+                          style={{ backgroundColor: `${node.color}15`, color: node.tagColor || node.color }}
                         >
                           {node.tagLabel}
                         </span>

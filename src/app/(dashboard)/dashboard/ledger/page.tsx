@@ -172,22 +172,31 @@ export default function LedgerPage() {
                     setFilterCategory(isSelected ? '' : item.name);
                     setPage(1);
                   }}
-                  className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 shadow-xs ${
+                  className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 shadow-xs border-l-4 ${
                     isSelected
                       ? 'border-primary ring-2 ring-primary/20 bg-surface-high'
                       : 'border-outline-variant bg-surface-low hover:bg-surface-lowest'
                   }`}
+                  style={{ borderLeftColor: item.color }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${item.color}20`, color: item.color }}>
                         <span className="material-symbols-outlined text-[16px]">{meta.icon}</span>
                       </div>
-                      <span className="font-bold text-xs text-primary">{item.name}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                        <span className="font-bold text-xs text-primary">{item.name}</span>
+                      </div>
                     </div>
-                    <span className="text-xs font-mono font-bold" style={{ color: item.color }}>
-                      {item.percent}%
-                    </span>
+                    {/* Visual Color Tag matching Pie Chart */}
+                    <div
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold shadow-2xs"
+                      style={{ backgroundColor: `${item.color}15`, color: item.color, border: `1px solid ${item.color}40` }}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span>{item.percent}%</span>
+                    </div>
                   </div>
 
                   <div>
