@@ -165,21 +165,29 @@ export default function IntelligencePage() {
           <p className="text-sm text-on-surface-variant">Track your subscriptions, manage spending envelopes, and plan out your debts.</p>
         </div>
 
-        {/* Global Intelligence Search Input */}
-        <div className="flex items-center gap-2 bg-surface-lowest border border-outline-variant rounded-xl px-3.5 py-2 w-full md:w-80 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-          <span className="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search subscriptions, budgets, loans..."
-            className="w-full bg-transparent text-sm text-primary placeholder:text-on-surface-variant/60 focus:outline-none"
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="text-on-surface-variant hover:text-primary">
-              <span className="material-symbols-outlined text-[16px]">close</span>
-            </button>
-          )}
+        {/* Global Intelligence Search Input & Button */}
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-2 bg-surface-lowest border border-outline-variant rounded-xl px-3.5 py-2 w-full md:w-72 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+            <span className="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search subscriptions, budgets, loans..."
+              className="w-full bg-transparent text-sm text-primary placeholder:text-on-surface-variant/60 focus:outline-none"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="text-on-surface-variant hover:text-primary">
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            )}
+          </div>
+          <button
+            onClick={() => {}}
+            className="px-3.5 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-container transition-all flex items-center gap-1 shadow-sm flex-shrink-0"
+          >
+            Search
+          </button>
         </div>
       </div>
 

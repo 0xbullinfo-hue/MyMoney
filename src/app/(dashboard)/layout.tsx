@@ -10,8 +10,10 @@ const navItems = [
   { icon: 'dashboard', label: 'Overview', href: '/dashboard' },
   { icon: 'account_balance_wallet', label: 'My Money', href: '/dashboard/mesh' },
   { icon: 'payments', label: 'Payday & Auto-Bills', href: '/dashboard/payday' },
+  { icon: 'newspaper', label: 'Financial News', href: '/dashboard/news' },
   { icon: 'psychology', label: 'Intelligence', href: '/dashboard/intelligence' },
   { icon: 'receipt_long', label: 'Ledger', href: '/dashboard/ledger' },
+  { icon: 'person', label: 'My Profile', href: '/dashboard/profile' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -19,12 +21,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { stealthModeEnabled, toggleStealthMode, globalCardFreeze, toggleGlobalCardFreeze } = useStealth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const handleLogout = () => {
+    // Security measure: Clear session and redirect to landing page without password remembrance
+    sessionStorage.clear();
+    localStorage.removeItem('auth_user');
+    window.location.href = '/';
+  };
+
   return (
     <div className="min-h-screen bg-surface font-body flex">
       {/* ═══ Desktop Sidebar ═══ */}
       <aside className={`hidden md:flex flex-col border-r border-outline-variant/30 bg-surface-lowest transition-all duration-300 ${sidebarCollapsed ? 'w-[72px]' : 'w-[260px]'}`}>
         <div className="p-4 flex items-center gap-3 border-b border-outline-variant/30">
-          <img src="/logo.png" alt="MyMoney" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
+          <img src="/logo.png" alt="MyMoney" className="w-10 h-10 rounded-xl object-contain shadow-sm border border-outline-variant/30 flex-shrink-0" />
           {!sidebarCollapsed && (
             <div className="flex flex-col">
               <span className="font-headline font-bold text-lg text-primary tracking-tight">MyMoney</span>
@@ -52,13 +61,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        <div className="p-3 border-t border-outline-variant/30">
+        {/* Sidebar Footer with Logout */}
+        <div className="p-3 border-t border-outline-variant/30 space-y-1">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-accent hover:bg-accent/10 transition-all w-full font-semibold"
+            title="Log Out Securely"
+          >
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+            {!sidebarCollapsed && <span>Log Out</span>}
+          </button>
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-on-surface-variant hover:bg-surface-low transition-all w-full"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-on-surface-variant hover:bg-surface-low transition-all w-full"
           >
-            <span className="material-symbols-outlined text-[20px]">{sidebarCollapsed ? 'chevron_right' : 'chevron_left'}</span>
-            {!sidebarCollapsed && <span>Collapse</span>}
+            <span className="material-symbols-outlined text-[18px]">{sidebarCollapsed ? 'chevron_right' : 'chevron_left'}</span>
+            {!sidebarCollapsed && <span>Collapse Sidebar</span>}
           </button>
         </div>
       </aside>
@@ -67,13 +85,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Top Header */}
         <header className="sticky top-0 z-30 glass-surface border-b border-outline-variant/30 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1 max-w-md">
-            <span className="material-symbols-outlined text-[20px] text-on-surface-variant">search</span>
-            <input
-              type="text" placeholder="Search transactions, nodes..."
-              className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none"
-            />
-            <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 rounded border border-outline-variant/40 text-[10px] font-mono text-on-surface-variant">⌘K</kbd>
+          <div className="flex items-center gap-2 flex-1 max-w-md">
+            <Link href="/dashboard" className="md:hidden flex-shrink-0" title="MyMoney Overview">
+              <img src="/logo.png" alt="MyMoney" className="w-8 h-8 rounded-lg object-contain shadow-xs border border-outline-variant/30" />
+            </Link>
+            <div className="flex items-center gap-2 flex-1 px-3.5 py-1.5 rounded-xl bg-surface-low border border-outline-variant/40">
+              <span className="material-symbols-outlined text-[18px] text-on-surface-variant">search</span>
+              <input
+                type="text"
+                placeholder="Search transactions, bills, banks..."
+                className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none"
+              />
+            </div>
+            <button
+              onClick={() => {}}
+              className="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-container transition-all flex items-center gap-1 shadow-sm"
+            >
+              Search
+            </button>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -89,9 +118,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="material-symbols-outlined text-[16px]">credit_card_off</span>
               <span className="hidden sm:inline">{globalCardFreeze ? 'Frozen' : 'Freeze'}</span>
             </button>
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+            <Link
+              href="/dashboard/profile"
+              className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold hover:ring-2 hover:ring-secondary transition-all"
+              title="View Profile"
+            >
               AO
-            </div>
+            </Link>
           </div>
         </header>
 

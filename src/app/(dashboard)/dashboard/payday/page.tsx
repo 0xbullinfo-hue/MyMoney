@@ -35,6 +35,13 @@ export default function PaydayHubPage() {
   const [cardDisconnectTarget, setCardDisconnectTarget] = useState<UserCardItem | null>(null);
   const [showDisconnectAllConfirm, setShowDisconnectAllConfirm] = useState(false);
 
+  // OTP Verification for Pay All Approval
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [otpChannel, setOtpChannel] = useState<'sms' | 'email'>('sms');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [otpResendSeconds, setOtpResendSeconds] = useState(45);
+
   // Filter bills
   const filteredBills = bills.filter((b) => {
     const matchesSearch = b.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
@@ -73,6 +80,26 @@ export default function PaydayHubPage() {
   // Handle Pay All (Open approval modal)
   const handlePayAllTrigger = () => {
     setIsApproving(true);
+  };
+
+  // Step 1.5: Proceed to OTP Verification Modal
+  const handleProceedToOtp = () => {
+    setIsApproving(false);
+    setIsOtpModalOpen(true);
+    setOtpCode('');
+    setOtpError('');
+    setOtpResendSeconds(45);
+  };
+
+  // Step 2: Validate OTP and Execute Payments
+  const handleVerifyOtpAndPay = () => {
+    if (otpCode.trim() !== '849210' && otpCode.trim().length !== 6) {
+      setOtpError('Invalid OTP code. Please enter the 6-digit verification code (Demo: 849210).');
+      return;
+    }
+    setOtpError('');
+    setIsOtpModalOpen(false);
+    executeApprovedPayments();
   };
 
   // Execute Approved Payments
@@ -154,21 +181,14 @@ export default function PaydayHubPage() {
       {/* ═══ Header ═══ */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-outline-variant print:hidden">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="font-headline font-extrabold text-2xl sm:text-3xl text-primary tracking-tight">Payday &amp; Auto-Bills</h1>
-            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-              rules.globalFreezeActive ? 'bg-accent/15 text-accent border border-accent/30' : 'bg-secondary/15 text-secondary border border-secondary/30'
-            }`}>
-              {rules.globalFreezeActive ? 'PAUSED (Frozen)' : 'ACTIVE: Monitoring Inflows'}
-            </span>
-          </div>
+          <h1 className="font-headline font-extrabold text-2xl sm:text-3xl text-primary tracking-tight">Payday &amp; Auto-Bills</h1>
           <p className="text-sm text-on-surface-variant mt-1">
             Whenever salary lands in your bank, MyMoney automatically pays your bills, funds your rent savings, and protects your peace of mind.
           </p>
         </div>
       </div>
 
-      {/* ═══ Top Summary KPI Bar (With 3 Action Buttons Aligned on Residual Card) ═══ */}
+      {/* ═══ Top Summary KPI Bar ═══ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 print:hidden">
         {/* Card 1 */}
         <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm space-y-1">
@@ -199,51 +219,47 @@ export default function PaydayHubPage() {
           </button>
         </div>
 
-        {/* Card 4: Residual Fund Card with 3 Action Buttons Aligned Horizontally on Top Right */}
-        <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm flex flex-col justify-between space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <div className="text-xs text-on-surface-variant font-medium">Residual Strategy</div>
-              <div className="text-sm font-bold text-secondary flex items-center gap-1 mt-0.5">
-                <span className="material-symbols-outlined text-[16px]">savings</span>
-                <span>14% p.a. Savings Sweep</span>
-              </div>
-            </div>
-
-            {/* 3 Horizontal Action Buttons */}
-            <div className="flex items-center gap-1.5 flex-wrap justify-end">
-              <button
-                onClick={() => setShowCardModal(true)}
-                className="p-1.5 sm:px-2.5 sm:py-1 rounded-xl bg-surface-low border border-outline-variant text-[11px] font-semibold text-primary hover:bg-surface-high transition-all flex items-center gap-1"
-                title="Manage Authorized Cards"
-              >
-                <span className="material-symbols-outlined text-[14px] text-secondary">credit_card</span>
-                <span className="hidden sm:inline">Cards ({cards.length})</span>
-              </button>
-              <button
-                onClick={toggleGlobalFreeze}
-                className={`p-1.5 sm:px-2.5 sm:py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 ${
-                  rules.globalFreezeActive ? 'bg-secondary text-white' : 'bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-white'
-                }`}
-                title={rules.globalFreezeActive ? 'Resume Auto-Bills' : 'Emergency Pause'}
-              >
-                <span className="material-symbols-outlined text-[14px]">
-                  {rules.globalFreezeActive ? 'play_arrow' : 'pause'}
-                </span>
-                <span className="hidden sm:inline">{rules.globalFreezeActive ? 'Resume' : 'Pause'}</span>
-              </button>
-              <button
-                onClick={handlePayAllTrigger}
-                className="p-1.5 sm:px-3 sm:py-1 rounded-xl bg-primary text-white font-bold text-[11px] hover:bg-primary-container transition-all flex items-center gap-1 shadow-sm active:scale-95"
-                title="Pay All Selected Bills"
-              >
-                <span className="material-symbols-outlined text-[14px]">payments</span>
-                <span>Pay All</span>
-              </button>
-            </div>
+        {/* Card 4: Residual Fund Card */}
+        <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm space-y-1">
+          <div className="text-xs text-on-surface-variant font-medium">Residual Strategy</div>
+          <div className="text-lg font-bold text-secondary flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[20px]">savings</span>
+            <span>14% p.a. Savings Sweep</span>
           </div>
-          <div className="text-[10px] text-on-surface-variant">Remaining funds after bills are swept into high-yield MMF.</div>
+          <div className="text-[11px] text-on-surface-variant">Remaining money swept into Stanbic MMF</div>
         </div>
+      </div>
+
+      {/* ═══ Action Buttons: Aligned Horizontally Below the Residual Card Row ═══ */}
+      <div className="flex flex-wrap items-center justify-end gap-3 print:hidden">
+        <button
+          onClick={() => setShowCardModal(true)}
+          className="px-4 py-2.5 rounded-xl bg-surface-lowest border border-outline-variant text-xs font-semibold text-primary hover:bg-surface-high transition-all flex items-center gap-2 shadow-sm"
+          title="Manage Authorized Cards"
+        >
+          <span className="material-symbols-outlined text-[18px] text-secondary">credit_card</span>
+          <span>Cards ({cards.length})</span>
+        </button>
+        <button
+          onClick={toggleGlobalFreeze}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm ${
+            rules.globalFreezeActive ? 'bg-secondary text-white' : 'bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-white'
+          }`}
+          title={rules.globalFreezeActive ? 'Resume Auto-Bills' : 'Emergency Pause'}
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            {rules.globalFreezeActive ? 'play_arrow' : 'pause'}
+          </span>
+          <span>{rules.globalFreezeActive ? 'Resume All Bills' : 'Pause All Bills'}</span>
+        </button>
+        <button
+          onClick={handlePayAllTrigger}
+          className="px-5 py-2.5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all flex items-center gap-2 shadow-md active:scale-95"
+          title="Pay All Selected Bills"
+        >
+          <span className="material-symbols-outlined text-[18px]">payments</span>
+          <span>Pay All ({formatCurrency(totalAutoScheduled)})</span>
+        </button>
       </div>
 
       {/* ═══ Filter & Search Bar ═══ */}
@@ -420,11 +436,119 @@ export default function PaydayHubPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={executeApprovedPayments}
+                  onClick={handleProceedToOtp}
                   className="w-2/3 py-3 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all shadow-md flex items-center justify-center gap-1.5"
                 >
                   <span className="material-symbols-outlined text-[16px]">done_all</span>
                   <span>Approve &amp; Pay ({formatCurrency(totalAutoScheduled)})</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ MODAL 1.5: TWO-FACTOR VERIFICATION (OTP) ═══ */}
+      <AnimatePresence>
+        {isOtpModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/85 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-surface-lowest border border-outline-variant max-w-md w-full rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5"
+            >
+              <div className="flex justify-between items-center">
+                <div className="w-12 h-12 rounded-2xl bg-secondary/15 text-secondary flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[28px]">lock_clock</span>
+                </div>
+                <button onClick={() => setIsOtpModalOpen(false)} className="text-on-surface-variant hover:text-primary">
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="font-headline font-bold text-xl text-primary">Two-Factor Authorization</h3>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  To approve paying <strong className="text-primary font-mono">{formatCurrency(totalAutoScheduled)}</strong> across your active bills, enter the 6-digit verification code.
+                </p>
+              </div>
+
+              {/* Delivery Channel Selector */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setOtpChannel('sms')}
+                  className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 transition-all ${
+                    otpChannel === 'sms'
+                      ? 'border-primary bg-primary/10 text-primary font-bold'
+                      : 'border-outline-variant bg-surface-low text-on-surface-variant'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">sms</span>
+                  <span>SMS (•••• 2044)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setOtpChannel('email')}
+                  className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 transition-all ${
+                    otpChannel === 'email'
+                      ? 'border-primary bg-primary/10 text-primary font-bold'
+                      : 'border-outline-variant bg-surface-low text-on-surface-variant'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">mail</span>
+                  <span>Email (a••••@gm...)</span>
+                </button>
+              </div>
+
+              {/* OTP Code Input */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-primary">Enter 6-Digit Code</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={(e) => {
+                      setOtpCode(e.target.value.replace(/\D/g, ''));
+                      setOtpError('');
+                    }}
+                    placeholder="849210"
+                    className="w-full text-center tracking-[0.4em] font-mono font-extrabold text-xl py-3 px-4 rounded-xl border border-outline-variant bg-surface-low text-primary focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                {otpError && (
+                  <div className="text-accent text-xs font-semibold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">error</span>
+                    <span>{otpError}</span>
+                  </div>
+                )}
+
+                {/* Helper pill to fill demo OTP */}
+                <div className="flex items-center justify-between text-[11px] pt-1 text-on-surface-variant">
+                  <span>Demo code: <button type="button" onClick={() => setOtpCode('849210')} className="font-mono font-bold text-secondary underline hover:opacity-80">849210</button></span>
+                  <span>Resend in {otpResendSeconds}s</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsOtpModalOpen(false)}
+                  className="w-1/3 py-3 rounded-xl border border-outline-variant bg-surface-low text-on-surface font-semibold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleVerifyOtpAndPay}
+                  className="w-2/3 py-3 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all shadow-md flex items-center justify-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">verified</span>
+                  <span>Verify &amp; Dispatch</span>
                 </button>
               </div>
             </motion.div>
