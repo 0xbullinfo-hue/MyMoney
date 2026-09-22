@@ -1,0 +1,30 @@
+export const tokens = {
+  primary: '#2E3A2F',
+  primaryContainer: '#3C4B3D',
+  primaryDark: '#1B241C',
+  secondary: '#6B7F5B',
+  secondaryFixed: '#8EA27E',
+  tertiary: '#D9C9B2',
+  tertiaryContainer: '#EFE6D8',
+  accent: '#C96F4F',
+  surface: '#F8F6EE',
+  surfaceLowest: '#FFFFFF',
+  surfaceLow: '#F0EDE4',
+  surfaceHigh: '#E3DDD0',
+  outline: '#D9C9B2',
+  onSurface: '#2E3A2F',
+  onSurfaceVariant: '#5E695B',
+  success: '#6B7F5B',
+  danger: '#C96F4F',
+  warning: '#C96F4F',
+} as const;
+
+export const chartColors = {
+  primary: tokens.primary,
+  secondary: tokens.secondary,
+  accent: tokens.accent,
+  tertiary: tokens.tertiary,
+  success: tokens.success,
+  danger: tokens.danger,
+  muted: tokens.outline,
+} as const;

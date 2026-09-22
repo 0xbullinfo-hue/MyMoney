@@ -1,0 +1,22 @@
+import type { Transaction } from '@/types';
+
+const now = Date.now();
+const hour = 3600000;
+
+export const mockTransactions: Transaction[] = [
+  { id: 'tx-1', nodeId: 'node-1', institutionName: 'GTBank PLC', amount: 45000, type: 'debit', category: 'Operations', description: 'Monthly Office Internet - Spectranet', merchantName: 'Spectranet Ltd', timestamp: new Date(now - 2 * hour).toISOString(), isSubscription: true, isFlaggedZombie: false },
+  { id: 'tx-2', nodeId: 'node-2', institutionName: 'Stanbic IBTC', amount: 2500000, type: 'credit', category: 'Transfers', description: 'Inward Transfer - Client Payment Q3', merchantName: 'Nexgen Solutions', timestamp: new Date(now - 5 * hour).toISOString(), isSubscription: false, isFlaggedZombie: false },
+  { id: 'tx-3', nodeId: 'node-1', institutionName: 'GTBank PLC', amount: 5500, type: 'debit', category: 'Subscriptions', description: 'Netflix Premium NG', merchantName: 'Netflix', timestamp: new Date(now - 8 * hour).toISOString(), isSubscription: true, isFlaggedZombie: false },
+  { id: 'tx-4', nodeId: 'node-3', institutionName: 'Kuda Bank MFB', amount: 8750, type: 'debit', category: 'Lifestyle', description: 'Bolt Ride - VI to Lekki', merchantName: 'Bolt Technology', timestamp: new Date(now - 12 * hour).toISOString(), isSubscription: false, isFlaggedZombie: false },
+  { id: 'tx-5', nodeId: 'node-1', institutionName: 'GTBank PLC', amount: 1800, type: 'debit', category: 'Subscriptions', description: 'Spotify Premium NG', merchantName: 'Spotify AB', timestamp: new Date(now - 24 * hour).toISOString(), isSubscription: true, isFlaggedZombie: true },
+  { id: 'tx-6', nodeId: 'node-2', institutionName: 'Stanbic IBTC', amount: 150000, type: 'debit', category: 'Operations', description: 'AWS Cloud Infrastructure', merchantName: 'Amazon Web Services', timestamp: new Date(now - 30 * hour).toISOString(), isSubscription: true, isFlaggedZombie: false },
+  { id: 'tx-7', nodeId: 'node-3', institutionName: 'Kuda Bank MFB', amount: 35000, type: 'debit', category: 'Lifestyle', description: 'Shoprite Victoria Island', merchantName: 'Shoprite NG', timestamp: new Date(now - 36 * hour).toISOString(), isSubscription: false, isFlaggedZombie: false },
+  { id: 'tx-8', nodeId: 'node-1', institutionName: 'GTBank PLC', amount: 4200, type: 'debit', category: 'Subscriptions', description: 'DStv Compact Plus', merchantName: 'MultiChoice', timestamp: new Date(now - 48 * hour).toISOString(), isSubscription: true, isFlaggedZombie: true },
+  { id: 'tx-9', nodeId: 'node-2', institutionName: 'Stanbic IBTC', amount: 500000, type: 'credit', category: 'Growth', description: 'Investment Dividend Payout', merchantName: 'Stanbic IBTC Asset Mgmt', timestamp: new Date(now - 60 * hour).toISOString(), isSubscription: false, isFlaggedZombie: false },
+  { id: 'tx-10', nodeId: 'node-3', institutionName: 'Kuda Bank MFB', amount: 2500, type: 'debit', category: 'Operations', description: 'MTN Data Bundle 10GB', merchantName: 'MTN Nigeria', timestamp: new Date(now - 72 * hour).toISOString(), isSubscription: false, isFlaggedZombie: false },
+  { id: 'tx-11', nodeId: 'node-1', institutionName: 'GTBank PLC', amount: 120000, type: 'debit', category: 'Operations', description: 'LAWMA Waste Management Q3', merchantName: 'LAWMA', timestamp: new Date(now - 80 * hour).toISOString(), isSubscription: false, isFlaggedZombie: false },
+  { id: 'tx-12', nodeId: 'node-2', institutionName: 'Stanbic IBTC', amount: 75000, type: 'debit', category: 'Growth', description: 'Udemy Annual Pro Subscription', merchantName: 'Udemy Inc', timestamp: new Date(now - 90 * hour).toISOString(), isSubscription: true, isFlaggedZombie: false },
+  { id: 'tx-13', nodeId: 'node-1', institutionName: 'GTBank PLC', amount: 3500000, type: 'credit', category: 'Transfers', description: 'Salary Credit - September 2026', merchantName: 'Employer Payroll', timestamp: new Date(now - 100 * hour).toISOString(), isSubscription: false, isFlaggedZombie: false },
+  { id: 'tx-14', nodeId: 'node-3', institutionName: 'Kuda Bank MFB', amount: 15000, type: 'debit', category: 'Lifestyle', description: 'Jumia Express Delivery', merchantName: 'Jumia Nigeria', timestamp: new Date(now - 110 * hour).toISOString(), isSubscription: false, isFlaggedZombie: false },
+  { id: 'tx-15', nodeId: 'node-1', institutionName: 'GTBank PLC', amount: 12400, type: 'debit', category: 'Subscriptions', description: 'Unused SaaS Analytics Tool', merchantName: 'Mixpanel Inc', timestamp: new Date(now - 120 * hour).toISOString(), isSubscription: true, isFlaggedZombie: true },
+];
