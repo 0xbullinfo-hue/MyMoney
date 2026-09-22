@@ -2,7 +2,15 @@ export type SubscriptionTier = 'free' | 'premium' | 'premium_plus';
 
 export type NodeStatus = 'active' | 'syncing' | 'degraded' | 'disconnected' | 'rate_limited';
 
-export type BankCategory = 'Commercial' | 'Investment' | 'Digital MFB' | 'Credit Line' | 'Business';
+export type BankCategory = 
+  | 'Commercial' 
+  | 'Investment' 
+  | 'Investment & Commercial'
+  | 'Digital MFB' 
+  | 'Non-Interest'
+  | 'Credit Line' 
+  | 'Digital Credit'
+  | 'Business';
 
 export interface User {
   id: string;

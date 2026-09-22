@@ -3,36 +3,37 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStealth } from '@/hooks/use-stealth';
-import { initialBillRoutes, initialPaydayRules } from '@/lib/mock-data/payday-routes';
-import type { BillRouteItem, PaydayInflowRule, InflowExecutionLog } from '@/types/payday';
+import { initialBillRoutes, initialPaydayRules, initialUserCards, billerCatalog } from '@/lib/mock-data/payday-routes';
+import type { BillRouteItem, PaydayInflowRule, InflowExecutionLog, UserCardItem, BillerCatalogItem, BillerPlanOption } from '@/types/payday';
 
 export default function PaydayHubPage() {
   const { formatCurrency } = useStealth();
   const [rules, setRules] = useState<PaydayInflowRule>(initialPaydayRules);
   const [bills, setBills] = useState<BillRouteItem[]>(initialBillRoutes);
+  const [cards, setCards] = useState<UserCardItem[]>(initialUserCards);
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Simulation modal state
-  const [isSimulating, setIsSimulating] = useState(false);
+  // Approval and Payment Simulation Modal
+  const [isApproving, setIsApproving] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
   const [simStep, setSimStep] = useState(0);
   const [simLog, setSimLog] = useState<InflowExecutionLog | null>(null);
 
   // New/Edit Bill Modal
   const [editingBill, setEditingBill] = useState<BillRouteItem | null>(null);
   const [isAddingBill, setIsAddingBill] = useState(false);
-  const [billForm, setBillForm] = useState<Partial<BillRouteItem>>({
-    name: '',
-    category: 'utilities',
-    targetAmount: 20000,
-    maxSpendingCap: 25000,
-    billerIdentifier: '',
-    assignedPaymentSourceName: 'GTBank Checking • 0491',
-    isAutoEnabled: true,
-  });
+  const [selectedCatalogId, setSelectedCatalogId] = useState<string>('cat_netflix');
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('net_premium');
+  const [customBillerId, setCustomBillerId] = useState('');
+  const [customCardId, setCustomCardId] = useState('card_01');
 
-  // Security Tokenization Drawer Modal
-  const [showSecurityDrawer, setShowSecurityDrawer] = useState(false);
+  // Card Management Modal & Prompts
+  const [showCardModal, setShowCardModal] = useState(false);
+  const [isAddingCard, setIsAddingCard] = useState(false);
+  const [newCardForm, setNewCardForm] = useState({ bankName: 'GTBank', cardType: 'Mastercard' as const, last4: '9920', expiry: '12/28', limit: 200000 });
+  const [cardDisconnectTarget, setCardDisconnectTarget] = useState<UserCardItem | null>(null);
+  const [showDisconnectAllConfirm, setShowDisconnectAllConfirm] = useState(false);
 
   // Filter bills
   const filteredBills = bills.filter((b) => {
@@ -56,9 +57,28 @@ export default function PaydayHubPage() {
     setRules({ ...rules, globalFreezeActive: !rules.globalFreezeActive });
   };
 
-  // Trigger salary simulation
-  const runSalarySimulation = () => {
-    setIsSimulating(true);
+  // Card disconnect actions
+  const confirmDisconnectCard = () => {
+    if (cardDisconnectTarget) {
+      setCards(cards.filter((c) => c.id !== cardDisconnectTarget.id));
+      setCardDisconnectTarget(null);
+    }
+  };
+
+  const confirmDisconnectAllCards = () => {
+    setCards([]);
+    setShowDisconnectAllConfirm(false);
+  };
+
+  // Handle Pay All (Open approval modal)
+  const handlePayAllTrigger = () => {
+    setIsApproving(true);
+  };
+
+  // Execute Approved Payments
+  const executeApprovedPayments = () => {
+    setIsApproving(false);
+    setIsPaying(true);
     setSimStep(1);
 
     setTimeout(() => {
@@ -67,32 +87,72 @@ export default function PaydayHubPage() {
 
     setTimeout(() => {
       setSimStep(3);
-      const activeBills = bills.filter((b) => b.isAutoEnabled);
+      const activeBills = bills.filter((b) => b.isAutoEnabled && !rules.globalFreezeActive);
       const totalBills = activeBills.reduce((s, b) => s + b.targetAmount, 0);
-      const residual = 1850000 - totalBills;
+      const vat = Math.round(totalBills * 0.075);
+      const emtl = activeBills.length * 50;
+      const detectedInflow = 1850000;
+      const residual = detectedInflow - (totalBills + vat + emtl);
 
       setSimLog({
-        id: `LOG-${Date.now()}`,
-        timestamp: new Date().toLocaleTimeString(),
-        detectedAmount: 1850000,
+        id: `INV-${Date.now().toString().slice(-6)}`,
+        timestamp: new Date().toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' }),
+        detectedAmount: detectedInflow,
         receivingBank: 'GTBank Checking (Acct • 0491)',
         totalBillsAllocated: totalBills,
+        vatLevy: vat,
+        emtlFee: emtl,
         residualSaved: residual,
         receipts: activeBills.map((b) => ({
           billName: b.name,
+          billerRef: b.billerIdentifier,
           amount: b.targetAmount,
-          reference: `NIP-TX-${Math.floor(100000 + Math.random() * 900000)}`,
+          reference: `NIP-${Math.floor(100000000 + Math.random() * 900000000)}`,
+          paymentSource: b.assignedPaymentSourceName,
           token: b.category === 'utilities' ? `TOKEN: ${Math.floor(1000 + Math.random()*9000)}-${Math.floor(1000 + Math.random()*9000)}-${Math.floor(1000 + Math.random()*9000)}-${Math.floor(1000 + Math.random()*9000)}` : undefined,
           status: 'success',
         })),
       });
-    }, 2800);
+    }, 2600);
+  };
+
+  // Download PDF Invoice
+  const handleDownloadInvoice = () => {
+    window.print();
+  };
+
+  // Save selected bill from catalog
+  const handleSaveCatalogBill = () => {
+    const catalogItem = billerCatalog.find((c) => c.id === selectedCatalogId);
+    if (!catalogItem) return;
+    const plan = catalogItem.plans.find((p) => p.id === selectedPlanId) || catalogItem.plans[0];
+    const card = cards.find((c) => c.id === customCardId) || cards[0];
+
+    const newBill: BillRouteItem = {
+      id: `bill_${Date.now()}`,
+      name: `${catalogItem.name} (${plan.name})`,
+      category: catalogItem.category,
+      categoryLabel: catalogItem.categoryLabel,
+      icon: catalogItem.icon,
+      targetAmount: plan.amount,
+      maxSpendingCap: Math.round(plan.amount * 1.2),
+      billerIdentifier: customBillerId || 'Registered Account',
+      assignedPaymentSourceId: card ? card.id : 'card_01',
+      assignedPaymentSourceName: card ? `${card.bankName} (•••• ${card.last4})` : 'GTBank (•••• 0491)',
+      selectedPlanId: plan.id,
+      isAutoEnabled: true,
+      status: 'active',
+      description: plan.description,
+    };
+
+    setBills([newBill, ...bills]);
+    setIsAddingBill(false);
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto pb-20 md:pb-6">
-      {/* ═══ Header & Control Center ═══ */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-outline-variant">
+    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto pb-20 md:pb-6 print:p-0 print:space-y-2">
+      {/* ═══ Header ═══ */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-outline-variant print:hidden">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="font-headline font-extrabold text-2xl sm:text-3xl text-primary tracking-tight">Payday &amp; Auto-Bills</h1>
@@ -103,58 +163,33 @@ export default function PaydayHubPage() {
             </span>
           </div>
           <p className="text-sm text-on-surface-variant mt-1">
-            Whenever bulk money lands in your bank, MyMoney automatically pays your bills, funds your rent savings, and protects your peace of mind.
+            Whenever salary lands in your bank, MyMoney automatically pays your bills, funds your rent savings, and protects your peace of mind.
           </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => setShowSecurityDrawer(true)}
-            className="px-3.5 py-2 rounded-xl bg-surface-lowest border border-outline-variant text-xs font-semibold text-primary hover:bg-surface-high transition-all flex items-center gap-1.5 shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
-            <span>Security &amp; Cards</span>
-          </button>
-          <button
-            onClick={toggleGlobalFreeze}
-            className={`px-3.5 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm ${
-              rules.globalFreezeActive ? 'bg-secondary text-white' : 'bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-white'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">
-              {rules.globalFreezeActive ? 'play_arrow' : 'pause_circle'}
-            </span>
-            <span>{rules.globalFreezeActive ? 'Resume Auto-Bills' : 'Emergency Pause All'}</span>
-          </button>
-          <button
-            onClick={runSalarySimulation}
-            className="px-4 py-2 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all flex items-center gap-1.5 shadow-md active:scale-95"
-          >
-            <span className="material-symbols-outlined text-[16px]">bolt</span>
-            <span>Test Salary Inflow (₦1.85M)</span>
-          </button>
         </div>
       </div>
 
-      {/* ═══ Top Summary KPI Bar ═══ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ═══ Top Summary KPI Bar (With 3 Action Buttons Aligned on Residual Card) ═══ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 print:hidden">
+        {/* Card 1 */}
         <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm space-y-1">
           <div className="text-xs text-on-surface-variant font-medium">Auto-Scheduled Bills</div>
           <div className="text-2xl font-bold font-mono text-primary">{formatCurrency(totalAutoScheduled)}</div>
           <div className="text-[11px] text-secondary font-semibold">Across {bills.filter((b) => b.isAutoEnabled).length} active bill categories</div>
         </div>
 
+        {/* Card 2 */}
         <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm space-y-1">
           <div className="text-xs text-on-surface-variant font-medium">Inflow Trigger Threshold</div>
           <div className="text-2xl font-bold font-mono text-primary">{formatCurrency(rules.minInflowThreshold)}</div>
           <div className="text-[11px] text-on-surface-variant">Triggers when incoming fund &ge; threshold</div>
         </div>
 
+        {/* Card 3 */}
         <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm space-y-1">
-          <div className="text-xs text-on-surface-variant font-medium">Execution Strategy</div>
+          <div className="text-xs text-on-surface-variant font-medium">Payment Authorization</div>
           <div className="text-lg font-bold text-primary flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-secondary text-[20px]">smart_toy</span>
-            <span>{rules.executionMode === 'autonomous' ? 'Fully Autonomous' : '1-Tap Approval'}</span>
+            <span className="material-symbols-outlined text-secondary text-[20px]">verified_user</span>
+            <span>{rules.executionMode === 'manual_approval' ? '1-Tap Approval' : 'Fully Autonomous'}</span>
           </div>
           <button
             onClick={() => setRules({ ...rules, executionMode: rules.executionMode === 'autonomous' ? 'manual_approval' : 'autonomous' })}
@@ -164,18 +199,55 @@ export default function PaydayHubPage() {
           </button>
         </div>
 
-        <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm space-y-1">
-          <div className="text-xs text-on-surface-variant font-medium">Residual Fund Strategy</div>
-          <div className="text-lg font-bold text-secondary flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[20px]">savings</span>
-            <span>14% p.a. Savings Sweep</span>
+        {/* Card 4: Residual Fund Card with 3 Action Buttons Aligned Horizontally on Top Right */}
+        <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm flex flex-col justify-between space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="text-xs text-on-surface-variant font-medium">Residual Strategy</div>
+              <div className="text-sm font-bold text-secondary flex items-center gap-1 mt-0.5">
+                <span className="material-symbols-outlined text-[16px]">savings</span>
+                <span>14% p.a. Savings Sweep</span>
+              </div>
+            </div>
+
+            {/* 3 Horizontal Action Buttons */}
+            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+              <button
+                onClick={() => setShowCardModal(true)}
+                className="p-1.5 sm:px-2.5 sm:py-1 rounded-xl bg-surface-low border border-outline-variant text-[11px] font-semibold text-primary hover:bg-surface-high transition-all flex items-center gap-1"
+                title="Manage Authorized Cards"
+              >
+                <span className="material-symbols-outlined text-[14px] text-secondary">credit_card</span>
+                <span className="hidden sm:inline">Cards ({cards.length})</span>
+              </button>
+              <button
+                onClick={toggleGlobalFreeze}
+                className={`p-1.5 sm:px-2.5 sm:py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 ${
+                  rules.globalFreezeActive ? 'bg-secondary text-white' : 'bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-white'
+                }`}
+                title={rules.globalFreezeActive ? 'Resume Auto-Bills' : 'Emergency Pause'}
+              >
+                <span className="material-symbols-outlined text-[14px]">
+                  {rules.globalFreezeActive ? 'play_arrow' : 'pause'}
+                </span>
+                <span className="hidden sm:inline">{rules.globalFreezeActive ? 'Resume' : 'Pause'}</span>
+              </button>
+              <button
+                onClick={handlePayAllTrigger}
+                className="p-1.5 sm:px-3 sm:py-1 rounded-xl bg-primary text-white font-bold text-[11px] hover:bg-primary-container transition-all flex items-center gap-1 shadow-sm active:scale-95"
+                title="Pay All Selected Bills"
+              >
+                <span className="material-symbols-outlined text-[14px]">payments</span>
+                <span>Pay All</span>
+              </button>
+            </div>
           </div>
-          <div className="text-[11px] text-on-surface-variant">Remaining money swept into Stanbic MMF</div>
+          <div className="text-[10px] text-on-surface-variant">Remaining funds after bills are swept into high-yield MMF.</div>
         </div>
       </div>
 
       {/* ═══ Filter & Search Bar ═══ */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-surface-lowest p-3 rounded-2xl border border-outline-variant">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-surface-lowest p-3 rounded-2xl border border-outline-variant print:hidden">
         <div className="flex items-center gap-2 w-full sm:w-80 px-3 py-1.5 rounded-xl bg-surface-low border border-outline-variant">
           <span className="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
           <input
@@ -208,26 +280,20 @@ export default function PaydayHubPage() {
           ))}
           <button
             onClick={() => {
-              setBillForm({
-                name: '',
-                category: 'utilities',
-                targetAmount: 25000,
-                maxSpendingCap: 30000,
-                billerIdentifier: '',
-                assignedPaymentSourceName: 'GTBank Checking • 0491',
-                isAutoEnabled: true,
-              });
+              setSelectedCatalogId('cat_netflix');
+              setSelectedPlanId('net_premium');
+              setCustomBillerId('');
               setIsAddingBill(true);
             }}
             className="px-3.5 py-1.5 rounded-xl bg-primary text-white text-xs font-bold flex items-center gap-1 ml-2 whitespace-nowrap"
           >
-            <span className="material-symbols-outlined text-[16px]">add</span> Add Bill
+            <span className="material-symbols-outlined text-[16px]">add</span> Add Bill Option
           </button>
         </div>
       </div>
 
       {/* ═══ Bills Matrix List ═══ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
         {filteredBills.map((bill) => (
           <div
             key={bill.id}
@@ -274,119 +340,207 @@ export default function PaydayHubPage() {
               </div>
 
               <div className="flex items-center gap-1.5 text-on-surface-variant font-medium">
-                <span className="material-symbols-outlined text-[14px] text-secondary">account_balance</span>
+                <span className="material-symbols-outlined text-[14px] text-secondary">credit_card</span>
                 <span>{bill.assignedPaymentSourceName}</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between text-[11px] pt-1 text-on-surface-variant">
-              <span>Last paid: {bill.lastSettledDate || 'Pending first inflow'}</span>
+              <span>Last paid: {bill.lastSettledDate || 'Pending next payday'}</span>
               <button
                 onClick={() => {
                   setEditingBill(bill);
-                  setBillForm(bill);
                 }}
                 className="text-primary font-semibold hover:underline"
               >
-                Edit Details
+                Change Plan / Card
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ═══ SIMULATION MODAL ═══ */}
+      {/* ═══ MODAL 1: PAY ALL APPROVAL MODAL ═══ */}
       <AnimatePresence>
-        {isSimulating && (
+        {isApproving && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/80 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-surface-lowest rounded-3xl border border-outline-variant max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative"
+              className="bg-surface-lowest rounded-3xl border border-outline-variant max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl relative"
             >
-              <button
-                onClick={() => setIsSimulating(false)}
-                className="absolute top-6 right-6 text-on-surface-variant hover:text-primary"
-              >
+              <button onClick={() => setIsApproving(false)} className="absolute top-6 right-6 text-on-surface-variant hover:text-primary">
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
 
               <div className="space-y-1">
-                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-secondary/15 text-secondary text-xs font-bold">
-                  <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-                  <span>Salary Drop Simulation</span>
+                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                  <span className="material-symbols-outlined text-[14px]">verified</span>
+                  <span>Payday Pre-Payment Verification</span>
                 </div>
-                <h3 className="font-headline font-bold text-xl text-primary">
-                  {simStep === 1 && 'Detecting Incoming Bulk Fund...'}
-                  {simStep === 2 && 'Executing Automated Bill Allocations...'}
-                  {simStep === 3 && 'All Bills Paid & Saved!'}
-                </h3>
+                <h3 className="font-headline font-bold text-xl text-primary">Approve All Payday Bills</h3>
+                <p className="text-xs text-on-surface-variant">Review every bill and assigned card before confirming payments.</p>
               </div>
 
+              {/* Itemized List */}
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {bills.filter((b) => b.isAutoEnabled).map((bill) => (
+                  <div key={bill.id} className="p-3 rounded-xl bg-surface-low border border-outline-variant flex items-center justify-between text-xs">
+                    <div>
+                      <div className="font-bold text-primary">{bill.name}</div>
+                      <div className="text-[11px] text-on-surface-variant">Source: {bill.assignedPaymentSourceName}</div>
+                    </div>
+                    <div className="font-bold font-mono text-primary text-sm">{formatCurrency(bill.targetAmount)}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Total Calculation */}
+              <div className="p-3.5 rounded-xl bg-surface-high border border-outline-variant space-y-1.5 text-xs">
+                <div className="flex justify-between text-on-surface-variant">
+                  <span>Total Bills to Clear:</span>
+                  <span className="font-mono font-bold text-primary">{formatCurrency(totalAutoScheduled)}</span>
+                </div>
+                <div className="flex justify-between text-on-surface-variant">
+                  <span>Estimated VAT &amp; EMTL Surcharge:</span>
+                  <span className="font-mono text-primary">{formatCurrency(Math.round(totalAutoScheduled * 0.075) + 300)}</span>
+                </div>
+                <div className="flex justify-between pt-1 border-t border-outline-variant/60 font-bold text-primary text-sm">
+                  <span>Total Debit Amount:</span>
+                  <span className="font-mono text-secondary">{formatCurrency(totalAutoScheduled + Math.round(totalAutoScheduled * 0.075) + 300)}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setIsApproving(false)}
+                  className="w-1/3 py-3 rounded-xl border border-outline-variant bg-surface-low text-on-surface font-semibold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeApprovedPayments}
+                  className="w-2/3 py-3 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all shadow-md flex items-center justify-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">done_all</span>
+                  <span>Approve &amp; Pay ({formatCurrency(totalAutoScheduled)})</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ MODAL 2: PAYMENT EXECUTION & DETAILED PDF INVOICE ═══ */}
+      <AnimatePresence>
+        {isPaying && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/85 backdrop-blur-md overflow-y-auto">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-surface-lowest rounded-3xl border border-outline-variant max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative my-8"
+            >
+              <button onClick={() => setIsPaying(false)} className="absolute top-6 right-6 text-on-surface-variant hover:text-primary print:hidden">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+
               {simStep === 1 && (
-                <div className="space-y-4 text-center py-6">
-                  <div className="w-16 h-16 rounded-full bg-secondary/15 text-secondary flex items-center justify-center mx-auto animate-bounce">
+                <div className="space-y-4 text-center py-8">
+                  <div className="w-14 h-14 rounded-full bg-secondary/15 text-secondary flex items-center justify-center mx-auto animate-bounce">
                     <span className="material-symbols-outlined text-[32px]">payments</span>
                   </div>
                   <div className="space-y-1">
-                    <div className="text-2xl font-bold font-mono text-primary">₦ 1,850,000.00</div>
-                    <div className="text-xs text-on-surface-variant">Incoming NIP Credit detected in GTBank Checking (Narration: "MAY SALARY/PAYROLL")</div>
+                    <div className="text-xl font-bold text-primary">Dispatching Authorized NIP Payments...</div>
+                    <div className="text-xs text-on-surface-variant font-mono">Contacting bank clearing gates and utility biller APIs...</div>
                   </div>
                 </div>
               )}
 
               {simStep === 2 && (
-                <div className="space-y-4 py-4">
+                <div className="space-y-4 text-center py-8">
                   <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto" />
-                  <div className="space-y-2 text-center">
-                    <div className="font-bold text-sm text-primary">Slicing &amp; Dispatching to 8 Billers...</div>
-                    <div className="text-xs text-on-surface-variant font-mono">
-                      Generating meter tokens • Sinking rent vault • Discarding leaks
-                    </div>
+                  <div className="space-y-1">
+                    <div className="text-lg font-bold text-primary">Generating Meter Tokens &amp; Sweeping Savings...</div>
+                    <div className="text-xs text-on-surface-variant font-mono">IKEDC prepaid handshake • Stanbic 14% vault credit confirmed</div>
                   </div>
                 </div>
               )}
 
               {simStep === 3 && simLog && (
-                <div className="space-y-4 py-2">
-                  <div className="p-3.5 rounded-xl bg-secondary/15 border border-secondary/30 flex justify-between items-center text-xs">
-                    <div>
-                      <span className="text-on-surface-variant block">Total Bills Settled:</span>
-                      <strong className="text-sm font-mono text-primary">{formatCurrency(simLog.totalBillsAllocated)}</strong>
+                <div className="space-y-6">
+                  {/* Invoice Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-outline-variant">
+                    <div className="flex items-center gap-3">
+                      <img src="/logo.png" alt="MyMoney" className="w-9 h-9 rounded-xl object-contain" />
+                      <div>
+                        <h2 className="font-headline font-extrabold text-xl text-primary">MyMoney Payday Invoice</h2>
+                        <div className="text-xs text-on-surface-variant font-mono">Invoice Ref: #{simLog.id} • {simLog.timestamp}</div>
+                      </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-on-surface-variant block">Residual Swept to Savings:</span>
-                      <strong className="text-sm font-mono text-secondary">{formatCurrency(simLog.residualSaved)}</strong>
+                      <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-700 font-bold text-xs">
+                        PAID &amp; SETTLED
+                      </span>
                     </div>
                   </div>
 
-                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                    {simLog.receipts.map((rec, i) => (
-                      <div key={i} className="p-2.5 rounded-xl bg-surface-low border border-outline-variant text-xs space-y-1">
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-primary">{rec.billName}</span>
-                          <span className="font-bold font-mono text-primary">{formatCurrency(rec.amount)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[10px] text-on-surface-variant font-mono">
-                          <span>Ref: {rec.reference}</span>
-                          <span className="text-emerald-600 font-bold">✓ Settled</span>
-                        </div>
-                        {rec.token && (
-                          <div className="p-1.5 rounded bg-surface-lowest text-[11px] font-mono text-secondary font-bold select-all">
-                            {rec.token}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                  {/* Summary Bar */}
+                  <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-surface-low border border-outline-variant text-center">
+                    <div>
+                      <div className="text-[10px] text-on-surface-variant uppercase font-semibold">Total Paid</div>
+                      <div className="text-base sm:text-lg font-bold font-mono text-primary">{formatCurrency(simLog.totalBillsAllocated)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-on-surface-variant uppercase font-semibold">VAT &amp; Levies</div>
+                      <div className="text-base sm:text-lg font-bold font-mono text-on-surface-variant">{formatCurrency(simLog.vatLevy + simLog.emtlFee)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-on-surface-variant uppercase font-semibold">Residual Saved</div>
+                      <div className="text-base sm:text-lg font-bold font-mono text-secondary">{formatCurrency(simLog.residualSaved)}</div>
+                    </div>
                   </div>
 
-                  <button
-                    onClick={() => setIsSimulating(false)}
-                    className="w-full py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-container transition-all"
-                  >
-                    Done &amp; Close Summary
-                  </button>
+                  {/* Itemized Table */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-mono font-bold uppercase text-on-surface-variant">Cleared Payday Bills</h4>
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      {simLog.receipts.map((rec, i) => (
+                        <div key={i} className="p-3 rounded-xl bg-surface-lowest border border-outline-variant text-xs space-y-1.5">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="font-bold text-primary">{rec.billName}</div>
+                              <div className="text-[11px] text-on-surface-variant">Ref: {rec.reference} • Paid via {rec.paymentSource}</div>
+                            </div>
+                            <div className="font-mono font-bold text-primary">{formatCurrency(rec.amount)}</div>
+                          </div>
+                          {rec.token && (
+                            <div className="p-2 rounded bg-secondary/10 border border-secondary/20 font-mono text-xs text-secondary font-bold select-all">
+                              Electricity Token: {rec.token}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Modal Action Footer */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-3 border-t border-outline-variant print:hidden">
+                    <button
+                      onClick={handleDownloadInvoice}
+                      className="flex-1 py-3 rounded-xl bg-secondary text-white font-bold text-xs hover:bg-secondary/90 transition-all flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                      <span>Download PDF Invoice</span>
+                    </button>
+                    <button
+                      onClick={() => setIsPaying(false)}
+                      className="flex-1 py-3 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all"
+                    >
+                      Done
+                    </button>
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -394,191 +548,346 @@ export default function PaydayHubPage() {
         )}
       </AnimatePresence>
 
-      {/* ═══ SECURITY DRAWER MODAL ═══ */}
+      {/* ═══ MODAL 3: CARD MANAGEMENT (ADD / DISCONNECT) ═══ */}
       <AnimatePresence>
-        {showSecurityDrawer && (
+        {showCardModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/80 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-surface-lowest rounded-3xl border border-outline-variant max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative"
+              className="bg-surface-lowest rounded-3xl border border-outline-variant max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl relative"
             >
-              <button
-                onClick={() => setShowSecurityDrawer(false)}
-                className="absolute top-6 right-6 text-on-surface-variant hover:text-primary"
-              >
+              <button onClick={() => setShowCardModal(false)} className="absolute top-6 right-6 text-on-surface-variant hover:text-primary">
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
 
               <div className="space-y-1">
-                <span className="font-mono text-xs text-secondary uppercase font-semibold">Anti-Scam Architecture</span>
-                <h3 className="font-headline font-bold text-xl text-primary">Secured Bank &amp; Card Authorizations</h3>
-                <p className="text-xs text-on-surface-variant">
-                  MyMoney never stores your card CVV or bank passwords. All payments use PCI-DSS tokenized mandates that can only pay whitelisted utilities.
-                </p>
+                <span className="text-xs font-mono font-bold uppercase text-secondary">Tokenized Card Vault</span>
+                <h3 className="font-headline font-bold text-xl text-primary">Authorized Payment Cards</h3>
+                <p className="text-xs text-on-surface-variant">Cards are tokenized securely with your bank. You can disconnect anytime.</p>
               </div>
 
+              {/* Cards List */}
               <div className="space-y-3">
-                <div className="p-3.5 rounded-xl bg-surface-low border border-outline-variant flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-secondary text-[24px]">credit_card</span>
-                    <div>
-                      <div className="font-bold text-sm text-primary">Access Bank Visa (•••• 4242)</div>
-                      <div className="text-[11px] text-on-surface-variant">Hardware Token: enc_card_tok_902418</div>
-                    </div>
+                {cards.length === 0 ? (
+                  <div className="p-8 text-center bg-surface-low rounded-2xl border border-outline-variant text-xs text-on-surface-variant">
+                    No active cards. Add a card below to assign to bills.
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-secondary/15 text-secondary">Token Active</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-surface-low border border-outline-variant flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-secondary text-[24px]">account_balance</span>
-                    <div>
-                      <div className="font-bold text-sm text-primary">GTBank Direct Mandate (•••• 0491)</div>
-                      <div className="text-[11px] text-on-surface-variant">CBN Open Banking Consent #CBN-MND-4410</div>
+                ) : (
+                  cards.map((card) => (
+                    <div key={card.id} className="p-4 rounded-2xl bg-surface-low border border-outline-variant flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-xs">
+                          {card.cardType.slice(0, 4)}
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm text-primary">{card.bankName} {card.cardType} (•••• {card.last4})</div>
+                          <div className="text-[11px] text-on-surface-variant">Expires: {card.expiry} • Limit: {formatCurrency(card.monthlySpendLimit)}/mo</div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setCardDisconnectTarget(card)}
+                        className="p-2 rounded-xl text-accent hover:bg-accent/10 border border-accent/30 text-xs font-semibold"
+                        title="Disconnect Card"
+                      >
+                        Disconnect
+                      </button>
                     </div>
-                  </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-secondary/15 text-secondary">Verified</span>
-                </div>
+                  ))
+                )}
               </div>
 
-              <div className="p-3 rounded-xl bg-surface-low text-xs space-y-1.5 text-on-surface-variant">
-                <div className="font-bold text-primary flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-secondary text-[16px]">shield</span>
-                  <span>Safety Guardrails Enforced</span>
-                </div>
-                <div>• Strict per-bill spending caps prevent billers from charging more than your limit.</div>
-                <div>• Beneficiaries are restricted exclusively to official utilities and your personal vaults.</div>
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setIsAddingCard(true)}
+                  className="w-1/2 py-2.5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all flex items-center justify-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">add_card</span>
+                  <span>Add New Card</span>
+                </button>
+                <button
+                  onClick={() => setShowDisconnectAllConfirm(true)}
+                  disabled={cards.length === 0}
+                  className="w-1/2 py-2.5 rounded-xl border border-accent/40 text-accent font-bold text-xs hover:bg-accent/10 transition-all disabled:opacity-40"
+                >
+                  Disconnect All Cards
+                </button>
               </div>
-
-              <button
-                onClick={() => setShowSecurityDrawer(false)}
-                className="w-full py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-container transition-all"
-              >
-                Close Security Settings
-              </button>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* ═══ ADD / EDIT BILL MODAL ═══ */}
+      {/* ═══ PROMPT: DISCONNECT SINGLE CARD CONFIRMATION ═══ */}
+      {cardDisconnectTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/80 backdrop-blur-md">
+          <div className="bg-surface-lowest border border-outline-variant w-full max-w-md rounded-3xl shadow-2xl p-6 sm:p-7 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-accent/15 text-accent flex items-center justify-center">
+              <span className="material-symbols-outlined text-[28px]">credit_card_off</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-headline font-bold text-lg text-primary">Disconnect Card •••• {cardDisconnectTarget.last4}?</h3>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                Are you sure you want to disconnect this card? Any recurring bills assigned to this card will be paused until you link another card.
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setCardDisconnectTarget(null)}
+                className="w-1/2 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-on-surface font-semibold text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDisconnectCard}
+                className="w-1/2 py-2.5 rounded-xl bg-accent text-white font-bold text-xs hover:bg-accent/90 transition-all"
+              >
+                Yes, Disconnect
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ PROMPT: DISCONNECT ALL CARDS CONFIRMATION ═══ */}
+      {showDisconnectAllConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/80 backdrop-blur-md">
+          <div className="bg-surface-lowest border border-outline-variant w-full max-w-md rounded-3xl shadow-2xl p-6 sm:p-7 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-accent/15 text-accent flex items-center justify-center">
+              <span className="material-symbols-outlined text-[28px]">warning</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-headline font-bold text-lg text-primary">Disconnect All Payment Cards?</h3>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                This will unbind all {cards.length} cards from MyMoney and pause all active Payday bill automations.
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setShowDisconnectAllConfirm(false)}
+                className="w-1/2 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-on-surface font-semibold text-xs"
+              >
+                No, Keep Cards
+              </button>
+              <button
+                onClick={confirmDisconnectAllCards}
+                className="w-1/2 py-2.5 rounded-xl bg-accent text-white font-bold text-xs hover:bg-accent/90 transition-all"
+              >
+                Yes, Disconnect All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: ADD CARD FORM ═══ */}
+      {isAddingCard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/80 backdrop-blur-md">
+          <div className="bg-surface-lowest border border-outline-variant w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-4">
+            <h3 className="font-headline font-bold text-lg text-primary">Link New Payment Card</h3>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-on-surface-variant mb-1 font-semibold">Issuing Bank</label>
+                <select
+                  value={newCardForm.bankName}
+                  onChange={(e) => setNewCardForm({ ...newCardForm, bankName: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary focus:outline-none"
+                >
+                  <option value="GTBank">Guaranty Trust Bank (GTBank)</option>
+                  <option value="Access Bank">Access Bank PLC</option>
+                  <option value="Zenith Bank">Zenith Bank PLC</option>
+                  <option value="Stanbic IBTC">Stanbic IBTC Bank</option>
+                  <option value="Kuda MFB">Kuda Microfinance Bank</option>
+                  <option value="First Bank">First Bank of Nigeria</option>
+                  <option value="UBA">United Bank for Africa (UBA)</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-on-surface-variant mb-1 font-semibold">Card Last 4 Digits</label>
+                  <input
+                    type="text"
+                    maxLength={4}
+                    value={newCardForm.last4}
+                    onChange={(e) => setNewCardForm({ ...newCardForm, last4: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-on-surface-variant mb-1 font-semibold">Expiry Date</label>
+                  <input
+                    type="text"
+                    placeholder="MM/YY"
+                    value={newCardForm.expiry}
+                    onChange={(e) => setNewCardForm({ ...newCardForm, expiry: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-on-surface-variant mb-1 font-semibold">Monthly Spending Ceiling (₦)</label>
+                <input
+                  type="number"
+                  value={newCardForm.limit}
+                  onChange={(e) => setNewCardForm({ ...newCardForm, limit: Number(e.target.value) })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setIsAddingCard(false)}
+                className="w-1/3 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-on-surface font-semibold text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const card: UserCardItem = {
+                    id: `card_${Date.now()}`,
+                    bankName: newCardForm.bankName,
+                    cardType: newCardForm.cardType,
+                    last4: newCardForm.last4 || '1234',
+                    expiry: newCardForm.expiry || '12/28',
+                    hardwareToken: `enc_hsm_${Math.floor(100000 + Math.random() * 900000)}`,
+                    monthlySpendLimit: newCardForm.limit,
+                    status: 'active',
+                  };
+                  setCards([...cards, card]);
+                  setIsAddingCard(false);
+                }}
+                className="w-2/3 py-2.5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all"
+              >
+                Authorize &amp; Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL 4: SELECT BILL FROM CATALOG / CHANGE OPTION ═══ */}
       <AnimatePresence>
-        {(isAddingBill || editingBill) && (
+        {isAddingBill && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/80 backdrop-blur-md">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-surface-lowest rounded-3xl border border-outline-variant max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl relative"
+              className="bg-surface-lowest border border-outline-variant max-w-lg w-full rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5"
             >
-              <button
-                onClick={() => { setIsAddingBill(false); setEditingBill(null); }}
-                className="absolute top-6 right-6 text-on-surface-variant hover:text-primary"
-              >
-                <span className="material-symbols-outlined text-[20px]">close</span>
-              </button>
+              <div className="flex justify-between items-center">
+                <h3 className="font-headline font-bold text-xl text-primary">Choose Bill Option</h3>
+                <button onClick={() => setIsAddingBill(false)} className="text-on-surface-variant hover:text-primary">
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
 
-              <h3 className="font-headline font-bold text-xl text-primary">
-                {editingBill ? 'Edit Bill Details' : 'Add New Recurring Bill'}
-              </h3>
-
+              {/* Step 1: Select Biller Catalog */}
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-on-surface-variant mb-1 font-semibold">Bill Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Estate Security Levy, Gym, Cooking Gas"
-                    value={billForm.name}
-                    onChange={(e) => setBillForm({ ...billForm, name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary focus:outline-none focus:border-primary text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-on-surface-variant mb-1 font-semibold">Biller Account / Identifier</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Meter No, Phone, Smartcard, or Vault Name"
-                    value={billForm.billerIdentifier}
-                    onChange={(e) => setBillForm({ ...billForm, billerIdentifier: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary focus:outline-none focus:border-primary text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-on-surface-variant mb-1 font-semibold">Target Pay (₦)</label>
-                    <input
-                      type="number"
-                      value={billForm.targetAmount}
-                      onChange={(e) => setBillForm({ ...billForm, targetAmount: Number(e.target.value) })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary focus:outline-none focus:border-primary text-sm font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-on-surface-variant mb-1 font-semibold">Max Safety Cap (₦)</label>
-                    <input
-                      type="number"
-                      value={billForm.maxSpendingCap}
-                      onChange={(e) => setBillForm({ ...billForm, maxSpendingCap: Number(e.target.value) })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary focus:outline-none focus:border-primary text-sm font-mono"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-on-surface-variant mb-1 font-semibold">Pay Using Bank / Card</label>
+                  <label className="block text-on-surface-variant mb-1 font-semibold">Select Bill Provider</label>
                   <select
-                    value={billForm.assignedPaymentSourceName}
-                    onChange={(e) => setBillForm({ ...billForm, assignedPaymentSourceName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary focus:outline-none focus:border-primary text-sm"
+                    value={selectedCatalogId}
+                    onChange={(e) => {
+                      setSelectedCatalogId(e.target.value);
+                      const cat = billerCatalog.find((c) => c.id === e.target.value);
+                      if (cat && cat.plans.length > 0) {
+                        setSelectedPlanId(cat.plans[0].id);
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary text-sm font-semibold"
                   >
-                    <option value="GTBank Checking • 0491">GTBank Checking • 0491</option>
-                    <option value="Stanbic IBTC • 8820">Stanbic IBTC (14% Yield) • 8820</option>
-                    <option value="Kuda Virtual Card • 1104">Kuda Virtual Card • 1104</option>
-                    <option value="Access Bank • 9912">Access Bank • 9912</option>
+                    {billerCatalog.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Step 2: Select Package / Plan Option */}
+                {(() => {
+                  const cat = billerCatalog.find((c) => c.id === selectedCatalogId);
+                  if (!cat) return null;
+                  return (
+                    <div>
+                      <label className="block text-on-surface-variant mb-1 font-semibold">Select Subscription Package / Tier</label>
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {cat.plans.map((p) => (
+                          <label
+                            key={p.id}
+                            className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                              selectedPlanId === p.id ? 'border-primary bg-primary/10' : 'border-outline-variant bg-surface-low'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <input
+                                type="radio"
+                                name="planSelect"
+                                checked={selectedPlanId === p.id}
+                                onChange={() => setSelectedPlanId(p.id)}
+                                className="accent-primary"
+                              />
+                              <div>
+                                <div className="font-bold text-primary text-xs">{p.name}</div>
+                                <div className="text-[10px] text-on-surface-variant">{p.description}</div>
+                              </div>
+                            </div>
+                            <div className="font-mono font-bold text-primary text-xs">{formatCurrency(p.amount)}</div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Step 3: Account Identifier */}
+                {(() => {
+                  const cat = billerCatalog.find((c) => c.id === selectedCatalogId);
+                  return (
+                    <div>
+                      <label className="block text-on-surface-variant mb-1 font-semibold">{cat ? cat.identifierLabel : 'Account ID'}</label>
+                      <input
+                        type="text"
+                        placeholder={cat ? cat.identifierPlaceholder : ''}
+                        value={customBillerId}
+                        onChange={(e) => setCustomBillerId(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary text-sm"
+                      />
+                    </div>
+                  );
+                })()}
+
+                {/* Step 4: Assign Card */}
+                <div>
+                  <label className="block text-on-surface-variant mb-1 font-semibold">Assign Payment Card</label>
+                  <select
+                    value={customCardId}
+                    onChange={(e) => setCustomCardId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary text-sm"
+                  >
+                    {cards.map((c) => (
+                      <option key={c.id} value={c.id}>{c.bankName} {c.cardType} (•••• {c.last4})</option>
+                    ))}
                   </select>
                 </div>
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button
-                  onClick={() => { setIsAddingBill(false); setEditingBill(null); }}
+                  onClick={() => setIsAddingBill(false)}
                   className="w-1/3 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-on-surface font-semibold text-xs"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    if (!billForm.name) return;
-                    if (editingBill) {
-                      setBills(bills.map((b) => (b.id === editingBill.id ? { ...b, ...billForm } as BillRouteItem : b)));
-                      setEditingBill(null);
-                    } else {
-                      const newBill: BillRouteItem = {
-                        id: `bill_${Date.now()}`,
-                        name: billForm.name || 'New Bill',
-                        category: (billForm.category || 'utilities') as any,
-                        categoryLabel: 'Custom Bill',
-                        icon: 'receipt',
-                        targetAmount: billForm.targetAmount || 20000,
-                        maxSpendingCap: billForm.maxSpendingCap || 25000,
-                        billerIdentifier: billForm.billerIdentifier || 'Account ID',
-                        assignedPaymentSourceId: 'node_gtb_01',
-                        assignedPaymentSourceName: billForm.assignedPaymentSourceName || 'GTBank Checking',
-                        isAutoEnabled: true,
-                        status: 'active',
-                        description: 'Custom recurring bill payment rule.',
-                      };
-                      setBills([newBill, ...bills]);
-                      setIsAddingBill(false);
-                    }
-                  }}
+                  onClick={handleSaveCatalogBill}
                   className="w-2/3 py-2.5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all shadow-md"
                 >
-                  Save Bill Setting
+                  Set as Payday Bill
                 </button>
               </div>
             </motion.div>

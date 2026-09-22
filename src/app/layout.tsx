@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: 'MyMoney — All Your Money, Banks & Bills in One Place',
   description: 'Connect all your banks, track your spending, stop money leaks, and automatically pay your bills the minute your salary lands.',
   keywords: ['fintech', 'open banking', 'personal finance', 'Nigeria', 'CBN', 'MyMoney'],
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

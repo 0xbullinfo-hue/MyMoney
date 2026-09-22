@@ -7,6 +7,35 @@ export type BillCategory =
   | 'living_groceries'
   | 'wealth_investment';
 
+export interface BillerPlanOption {
+  id: string;
+  name: string;
+  amount: number;
+  description: string;
+}
+
+export interface BillerCatalogItem {
+  id: string;
+  name: string;
+  category: BillCategory;
+  categoryLabel: string;
+  icon: string;
+  identifierLabel: string;
+  identifierPlaceholder: string;
+  plans: BillerPlanOption[];
+}
+
+export interface UserCardItem {
+  id: string;
+  bankName: string;
+  cardType: 'Visa' | 'Mastercard' | 'Verve';
+  last4: string;
+  expiry: string;
+  hardwareToken: string;
+  monthlySpendLimit: number;
+  status: 'active' | 'frozen';
+}
+
 export interface BillRouteItem {
   id: string;
   name: string;
@@ -18,6 +47,7 @@ export interface BillRouteItem {
   billerIdentifier: string; // Meter number, smartcard, phone number, etc.
   assignedPaymentSourceId: string;
   assignedPaymentSourceName: string;
+  selectedPlanId?: string;
   isAutoEnabled: boolean;
   status: 'active' | 'paused' | 'settled' | 'pending_inflow';
   lastSettledDate?: string;
@@ -40,10 +70,14 @@ export interface InflowExecutionLog {
   receivingBank: string;
   totalBillsAllocated: number;
   residualSaved: number;
+  vatLevy: number;
+  emtlFee: number;
   receipts: {
     billName: string;
+    billerRef: string;
     amount: number;
     reference: string;
+    paymentSource: string;
     token?: string; // e.g. electricity recharge token
     status: 'success' | 'queued' | 'held_for_review';
   }[];

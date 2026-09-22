@@ -150,7 +150,7 @@ export default function MarketingLandingPage() {
           <div className="flex items-center gap-6 pt-2 text-xs text-on-surface-variant">
             <div className="flex items-center gap-1.5">
               <span className="material-symbols-outlined text-secondary text-[16px]">verified_user</span>
-              <span>Read-only bank connections</span>
+              <span>Secure Automated Bank &amp; Card Payments</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="material-symbols-outlined text-secondary text-[16px]">lock</span>
@@ -188,6 +188,49 @@ export default function MarketingLandingPage() {
             </div>
             <div className="pt-2 text-center">
               <span className="text-[11px] text-white/60">Protected with Bank-Grade 256-bit Encryption</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════ HOW IT WORKS SECTION ═══════════ */}
+      <section id="how-it-works" className="py-16 sm:py-20 border-t border-outline-variant bg-surface">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12 space-y-3">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-secondary">3 Simple Steps</span>
+            <h2 className="font-headline font-bold text-2xl sm:text-3xl text-primary">How MyMoney Automates Your Life</h2>
+            <p className="text-on-surface-variant max-w-xl mx-auto">Zero spreadsheets. Zero manual bank transfers every month.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+            <div className="p-6 sm:p-8 rounded-3xl bg-surface-lowest border border-outline-variant shadow-sm space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center font-headline font-bold text-lg">
+                1
+              </div>
+              <h3 className="font-headline font-bold text-lg text-primary">Connect Your Banks &amp; Cards</h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                Link any of the 33 NDIC-insured banks in Nigeria (GTBank, Access, Kuda, Zenith, Stanbic) in seconds with encrypted read-only tokens.
+              </p>
+            </div>
+
+            <div className="p-6 sm:p-8 rounded-3xl bg-surface-lowest border border-outline-variant shadow-sm space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-secondary text-white flex items-center justify-center font-headline font-bold text-lg">
+                2
+              </div>
+              <h3 className="font-headline font-bold text-lg text-primary">Pick Your Payday Bills</h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                Choose your electricity meter, MTN/Starlink internet, Netflix plan, DSTV bouquet, and rent savings. Assign which card or bank pays each bill.
+              </p>
+            </div>
+
+            <div className="p-6 sm:p-8 rounded-3xl bg-surface-lowest border border-outline-variant shadow-sm space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-secondary-fixed text-primary flex items-center justify-center font-headline font-bold text-lg">
+                3
+              </div>
+              <h3 className="font-headline font-bold text-lg text-primary">Relax &amp; Download Receipts</h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                The moment your salary lands, MyMoney automatically pays all selected bills, sends prepaid power tokens to your phone, and generates a printable PDF invoice.
+              </p>
             </div>
           </div>
         </div>
