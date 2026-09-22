@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStealth } from '@/hooks/use-stealth';
 import { mockSubscriptions } from '@/lib/mock-data/subscriptions';
@@ -10,11 +10,33 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 import { tokens } from '@/lib/tailwind-tokens';
 import type { SubscriptionItem, EnvelopeBudget, DebtItem } from '@/types';
 
+interface CategoryGroup {
+  category: string;
+  total: number;
+  color: string;
+  items: SubscriptionItem[];
+}
+
 const tabs = ['Subscription Radar', 'Envelope Budgets', 'Debt Simulator'];
 
 export default function IntelligencePage() {
   const { formatCurrency } = useStealth();
   const [activeTab, setActiveTab] = useState(0);
+
+  // Read URL query parameter ?tab=0, ?tab=2, etc.
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab === '2' || tab === 'debt') {
+        setActiveTab(2);
+      } else if (tab === '1' || tab === 'envelopes') {
+        setActiveTab(1);
+      } else if (tab === '0' || tab === 'subscriptions') {
+        setActiveTab(0);
+      }
+    }
+  }, []);
 
   // ═══════════ STATE FOR EDITABLE MODULES ═══════════
   const [subs, setSubs] = useState<SubscriptionItem[]>(mockSubscriptions);
@@ -116,15 +138,41 @@ export default function IntelligencePage() {
   // Computations
   const subHealth = getSubscriptionHealth(subs);
 
-  const subsByCategory = subs.filter((s) => s.status !== 'blocked').reduce((acc, s) => {
-    const key = s.merchantName.includes('Netflix') || s.merchantName.includes('Spotify') || s.merchantName.includes('DStv') ? 'Entertainment' :
-      s.merchantName.includes('AWS') || s.merchantName.includes('Cloud') || s.merchantName.includes('Mixpanel') ? 'SaaS' : 'Utilities';
-    acc[key] = (acc[key] || 0) + s.amount;
-    return acc;
-  }, {} as Record<string, number>);
+  // Group subscriptions by category to accommodate several items with itemized breakdown
+  const getSubscriptionCategory = (name: string): string => {
+    const lower = name.toLowerCase();
+    if (lower.includes('netflix') || lower.includes('spotify') || lower.includes('dstv') || lower.includes('youtube') || lower.includes('showmax') || lower.includes('prime')) return 'Entertainment';
+    if (lower.includes('aws') || lower.includes('cloud') || lower.includes('mixpanel') || lower.includes('icloud') || lower.includes('google') || lower.includes('github') || lower.includes('chatgpt') || lower.includes('canva') || lower.includes('udemy')) return 'Cloud & Software';
+    if (lower.includes('spectranet') || lower.includes('starlink') || lower.includes('mtn') || lower.includes('airtel') || lower.includes('fiber') || lower.includes('smile') || lower.includes('internet')) return 'Utilities & Telecom';
+    return 'Lifestyle & Services';
+  };
 
-  const pieData = Object.entries(subsByCategory).map(([name, value]) => ({ name, value }));
-  const pieColors = [tokens.primary, tokens.secondary, tokens.accent, tokens.secondaryFixed];
+  const categoryGroups: CategoryGroup[] = useMemo(() => {
+    const groups: Record<string, CategoryGroup> = {
+      'Entertainment': { category: 'Entertainment', total: 0, color: '#C96F4F', items: [] },
+      'Cloud & Software': { category: 'Cloud & Software', total: 0, color: '#2E3A2F', items: [] },
+      'Utilities & Telecom': { category: 'Utilities & Telecom', total: 0, color: '#6B7F5B', items: [] },
+      'Lifestyle & Services': { category: 'Lifestyle & Services', total: 0, color: '#8EA27E', items: [] },
+    };
+
+    subs.filter((s: SubscriptionItem) => s.status !== 'blocked').forEach((s: SubscriptionItem) => {
+      const cat = getSubscriptionCategory(s.merchantName);
+      if (!groups[cat]) {
+        groups[cat] = { category: cat, total: 0, color: '#B5987A', items: [] };
+      }
+      const monthlyAmount = s.billingCycle === 'annual' ? Math.round(s.amount / 12) : s.amount;
+      groups[cat].total += monthlyAmount;
+      groups[cat].items.push(s);
+    });
+
+    return Object.values(groups).filter((g: CategoryGroup) => g.items.length > 0);
+  }, [subs]);
+
+  const pieData = categoryGroups.map((g: CategoryGroup) => ({
+    name: g.category,
+    value: g.total,
+    color: g.color,
+  }));
 
   const sortedDebts = [...debts].sort((a, b) =>
     debtStrategy === 'avalanche' ? b.apr - a.apr : a.balance - b.balance
@@ -317,29 +365,77 @@ export default function IntelligencePage() {
               )))}
             </div>
 
-            {/* Pie Chart */}
-            <div className="p-5 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm">
-              <h4 className="text-xs font-mono text-on-surface-variant uppercase tracking-wider mb-4 font-semibold">By Category</h4>
-              <div className="h-48">
+            {/* By Category Breakdown (Accommodates Several Subscriptions with Itemized Breakdown) */}
+            <div className="p-5 rounded-3xl bg-surface-lowest border border-outline-variant shadow-sm space-y-4">
+              <div className="flex justify-between items-center pb-2 border-b border-outline-variant">
+                <div>
+                  <h4 className="font-headline font-bold text-sm text-primary">By Category Breakdown</h4>
+                  <p className="text-[11px] text-on-surface-variant">Detailed breakdown of all active services.</p>
+                </div>
+                <span className="text-xs font-mono font-bold text-secondary">
+                  {categoryGroups.reduce((acc: number, g: CategoryGroup) => acc + g.items.length, 0)} Services
+                </span>
+              </div>
+
+              {/* Pie Chart */}
+              <div className="h-44">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={pieData} innerRadius="55%" outerRadius="90%" paddingAngle={3} dataKey="value" stroke="none">
-                      {pieData.map((_, i) => (<Cell key={i} fill={pieColors[i % pieColors.length]} />))}
+                      {pieData.map((entry: { name: string; value: number; color: string }, i: number) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
                     </Pie>
-                    <Tooltip formatter={(v: any) => formatCurrency(Number(v) || 0)} contentStyle={{ background: '#2E3A2F', border: 'none', borderRadius: '8px', fontSize: '11px', color: '#fff' }} />
+                    <Tooltip
+                      formatter={(v: any) => formatCurrency(Number(v) || 0)}
+                      contentStyle={{ background: '#2E3A2F', border: 'none', borderRadius: '12px', fontSize: '11px', color: '#fff' }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="space-y-2 mt-4">
-                {pieData.map((d, i) => (
-                  <div key={d.name} className="flex justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ background: pieColors[i % pieColors.length] }} />
-                      <span className="text-on-surface-variant">{d.name}</span>
+
+              {/* Itemized Categories with List of Subscriptions */}
+              <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                {categoryGroups.map((group: CategoryGroup) => {
+                  const percentOfTotal = subHealth.totalMonthlyBurn > 0
+                    ? Math.round((group.total / subHealth.totalMonthlyBurn) * 100)
+                    : 0;
+
+                  return (
+                    <div key={group.category} className="p-3.5 rounded-2xl bg-surface-low border border-outline-variant space-y-2">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: group.color }} />
+                          <span className="font-bold text-xs text-primary">{group.category}</span>
+                          <span className="text-[10px] text-on-surface-variant font-mono">({group.items.length})</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-mono font-bold text-xs text-primary">{formatCurrency(group.total)}</span>
+                          <span className="text-[10px] text-on-surface-variant ml-1 font-mono">({percentOfTotal}%)</span>
+                        </div>
+                      </div>
+
+                      {/* Subscriptions List in this Category */}
+                      <div className="divide-y divide-outline-variant/30 text-[11px] pt-1">
+                        {group.items.map((sub: SubscriptionItem) => (
+                          <div key={sub.id} className="py-1.5 flex justify-between items-center text-on-surface-variant">
+                            <div className="flex items-center gap-1.5 truncate max-w-[170px]">
+                              <span className="truncate">{sub.merchantName}</span>
+                              {sub.status === 'flagged_zombie' && (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-accent/15 text-accent font-bold">
+                                  Unused
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-mono text-primary font-semibold flex-shrink-0">
+                              {formatCurrency(sub.amount)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <span className="font-mono font-semibold text-primary">{formatCurrency(d.value)}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

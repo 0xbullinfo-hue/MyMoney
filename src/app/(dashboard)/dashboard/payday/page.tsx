@@ -230,35 +230,85 @@ export default function PaydayHubPage() {
         </div>
       </div>
 
-      {/* ═══ Action Buttons: Aligned Horizontally Below the Residual Card Row ═══ */}
-      <div className="flex flex-wrap items-center justify-end gap-3 print:hidden">
+      {/* ═══ Action Cards: Spread Horizontally Across Layout ═══ */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full print:hidden">
+        {/* Card 1: Cards */}
         <button
+          type="button"
           onClick={() => setShowCardModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-surface-lowest border border-outline-variant text-xs font-semibold text-primary hover:bg-surface-high transition-all flex items-center gap-2 shadow-sm"
+          className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant hover:border-primary/40 hover:bg-surface-high transition-all text-left shadow-sm flex items-center justify-between group"
           title="Manage Authorized Cards"
         >
-          <span className="material-symbols-outlined text-[18px] text-secondary">credit_card</span>
-          <span>Cards ({cards.length})</span>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-secondary/10 border border-secondary/20 flex items-center justify-center text-secondary group-hover:scale-105 transition-transform">
+              <span className="material-symbols-outlined text-[24px]">credit_card</span>
+            </div>
+            <div>
+              <div className="text-xs font-bold text-primary flex items-center gap-1.5">
+                <span>Manage Cards</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-secondary/15 text-secondary text-[10px] font-mono font-bold">
+                  {cards.length} Active
+                </span>
+              </div>
+              <div className="text-[11px] text-on-surface-variant mt-0.5">Link or disconnect payment cards</div>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary transition-colors">chevron_right</span>
         </button>
+
+        {/* Card 2: Pause All Bills */}
         <button
+          type="button"
           onClick={toggleGlobalFreeze}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm ${
-            rules.globalFreezeActive ? 'bg-secondary text-white' : 'bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-white'
+          className={`p-4 rounded-2xl border transition-all text-left shadow-sm flex items-center justify-between group ${
+            rules.globalFreezeActive
+              ? 'bg-secondary text-white border-secondary'
+              : 'bg-surface-lowest border-outline-variant hover:border-accent/40 hover:bg-surface-high'
           }`}
           title={rules.globalFreezeActive ? 'Resume Auto-Bills' : 'Emergency Pause'}
         >
-          <span className="material-symbols-outlined text-[18px]">
-            {rules.globalFreezeActive ? 'play_arrow' : 'pause'}
+          <div className="flex items-center gap-3">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform ${
+              rules.globalFreezeActive ? 'bg-white/20 text-white' : 'bg-accent/10 border border-accent/20 text-accent'
+            }`}>
+              <span className="material-symbols-outlined text-[24px]">
+                {rules.globalFreezeActive ? 'play_arrow' : 'pause'}
+              </span>
+            </div>
+            <div>
+              <div className={`text-xs font-bold ${rules.globalFreezeActive ? 'text-white' : 'text-primary'}`}>
+                {rules.globalFreezeActive ? 'Resume All Bills' : 'Pause All Bills'}
+              </div>
+              <div className={`text-[11px] mt-0.5 ${rules.globalFreezeActive ? 'text-white/80' : 'text-on-surface-variant'}`}>
+                {rules.globalFreezeActive ? 'Payday auto-bills currently frozen' : 'Emergency 1-tap freeze for debits'}
+              </div>
+            </div>
+          </div>
+          <span className={`material-symbols-outlined text-[18px] ${rules.globalFreezeActive ? 'text-white' : 'text-on-surface-variant'}`}>
+            {rules.globalFreezeActive ? 'check_circle' : 'chevron_right'}
           </span>
-          <span>{rules.globalFreezeActive ? 'Resume All Bills' : 'Pause All Bills'}</span>
         </button>
+
+        {/* Card 3: Pay All */}
         <button
+          type="button"
           onClick={handlePayAllTrigger}
-          className="px-5 py-2.5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all flex items-center gap-2 shadow-md active:scale-95"
+          className="p-4 rounded-2xl bg-primary text-white border border-outline-variant hover:bg-primary-container transition-all text-left shadow-md flex items-center justify-between group active:scale-[0.99]"
           title="Pay All Selected Bills"
         >
-          <span className="material-symbols-outlined text-[18px]">payments</span>
-          <span>Pay All ({formatCurrency(totalAutoScheduled)})</span>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center text-secondary-fixed group-hover:scale-105 transition-transform">
+              <span className="material-symbols-outlined text-[24px]">payments</span>
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>Pay All Bills</span>
+                <span className="font-mono text-secondary-fixed">({formatCurrency(totalAutoScheduled)})</span>
+              </div>
+              <div className="text-[11px] text-white/70 mt-0.5">Trigger 1-tap 2FA OTP payment</div>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-[18px] text-secondary-fixed group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
         </button>
       </div>
 
