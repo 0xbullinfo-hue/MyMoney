@@ -9,6 +9,7 @@ import { useStealth } from '@/hooks/use-stealth';
 const navItems = [
   { icon: 'dashboard', label: 'Overview', href: '/dashboard' },
   { icon: 'account_balance_wallet', label: 'My Money', href: '/dashboard/mesh' },
+  { icon: 'payments', label: 'Payday & Auto-Bills', href: '/dashboard/payday' },
   { icon: 'psychology', label: 'Intelligence', href: '/dashboard/intelligence' },
   { icon: 'receipt_long', label: 'Ledger', href: '/dashboard/ledger' },
 ];
@@ -23,8 +24,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* ═══ Desktop Sidebar ═══ */}
       <aside className={`hidden md:flex flex-col border-r border-outline-variant/30 bg-surface-lowest transition-all duration-300 ${sidebarCollapsed ? 'w-[72px]' : 'w-[260px]'}`}>
         <div className="p-4 flex items-center gap-3 border-b border-outline-variant/30">
-          <span className="w-3 h-3 rounded-full bg-secondary-fixed shadow-glow flex-shrink-0 animate-pulse-glow" />
-          {!sidebarCollapsed && <span className="font-headline font-bold text-lg text-primary tracking-tight">MyMoney OS</span>}
+          <img src="/logo.png" alt="MyMoney" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
+          {!sidebarCollapsed && (
+            <div className="flex flex-col">
+              <span className="font-headline font-bold text-lg text-primary tracking-tight">MyMoney</span>
+              <span className="text-[10px] text-on-surface-variant font-medium -mt-1">All MyMoney</span>
+            </div>
+          )}
         </div>
 
         <nav className="flex-1 py-4 px-3 space-y-1">

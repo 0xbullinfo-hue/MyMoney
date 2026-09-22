@@ -144,12 +144,42 @@ export default function IntelligencePage() {
     spent: e.spentAmount,
   }));
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredSubs = subs.filter((s) =>
+    s.merchantName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredEnvelopes = envelopes.filter((e) =>
+    e.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredDebts = debts.filter((d) =>
+    d.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto pb-20 md:pb-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-headline font-bold text-2xl text-primary">Financial Intelligence Suite</h1>
-          <p className="text-sm text-on-surface-variant">Interactive modeling, editable subscription radar, envelope allocations, and loan acceleration.</p>
+          <h1 className="font-headline font-bold text-2xl text-primary">Money Intelligence &amp; Budgets</h1>
+          <p className="text-sm text-on-surface-variant">Track your subscriptions, manage spending envelopes, and plan out your debts.</p>
+        </div>
+
+        {/* Global Intelligence Search Input */}
+        <div className="flex items-center gap-2 bg-surface-lowest border border-outline-variant rounded-xl px-3.5 py-2 w-full md:w-80 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+          <span className="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search subscriptions, budgets, loans..."
+            className="w-full bg-transparent text-sm text-primary placeholder:text-on-surface-variant/60 focus:outline-none"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="text-on-surface-variant hover:text-primary">
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -173,7 +203,10 @@ export default function IntelligencePage() {
         <div className="space-y-6">
           {/* Header Action Bar */}
           <div className="flex justify-between items-center">
-            <h2 className="font-headline font-bold text-lg text-primary">Active Subscriptions &amp; Recurring Debits</h2>
+            <div>
+              <h2 className="font-headline font-bold text-lg text-primary">Subscriptions &amp; Recurring Bills</h2>
+              <p className="text-xs text-on-surface-variant">Review monthly charges and cancel unused services.</p>
+            </div>
             <button
               onClick={() => {
                 setSubForm({ merchantName: '', amount: 5000, billingCycle: 'monthly' });
@@ -188,19 +221,19 @@ export default function IntelligencePage() {
           {/* Summary Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant text-center shadow-sm">
-              <div className="text-xs font-mono text-on-surface-variant uppercase font-semibold">Monthly Burn</div>
+              <div className="text-xs font-mono text-on-surface-variant uppercase font-semibold">Total Monthly Cost</div>
               <div className="text-lg font-bold font-mono text-primary">{formatCurrency(subHealth.totalMonthlyBurn)}</div>
             </div>
             <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant text-center shadow-sm">
-              <div className="text-xs font-mono text-on-surface-variant uppercase font-semibold">Active</div>
+              <div className="text-xs font-mono text-on-surface-variant uppercase font-semibold">Active Services</div>
               <div className="text-lg font-bold font-mono text-secondary">{subHealth.active}</div>
             </div>
             <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant text-center shadow-sm">
-              <div className="text-xs font-mono text-on-surface-variant uppercase font-semibold">🧟 Zombies</div>
+              <div className="text-xs font-mono text-on-surface-variant uppercase font-semibold">Unused Subscriptions</div>
               <div className="text-lg font-bold font-mono text-accent">{subHealth.zombie}</div>
             </div>
             <div className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant text-center shadow-sm">
-              <div className="text-xs font-mono text-on-surface-variant uppercase font-semibold">Zombie Burn</div>
+              <div className="text-xs font-mono text-on-surface-variant uppercase font-semibold">Money Leaking</div>
               <div className="text-lg font-bold font-mono text-accent">{formatCurrency(subHealth.zombieBurn)}</div>
             </div>
           </div>
@@ -208,7 +241,12 @@ export default function IntelligencePage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Subscription List */}
             <div className="lg:col-span-2 space-y-3">
-              {subs.map((sub) => (
+              {filteredSubs.length === 0 ? (
+                <div className="p-8 text-center bg-surface-lowest border border-outline-variant rounded-2xl text-on-surface-variant text-sm">
+                  No subscriptions match your search.
+                </div>
+              ) : (
+                filteredSubs.map((sub) => (
                 <div
                   key={sub.id}
                   className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3"
@@ -268,7 +306,7 @@ export default function IntelligencePage() {
                     )}
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
 
             {/* Pie Chart */}
@@ -304,7 +342,10 @@ export default function IntelligencePage() {
       {activeTab === 1 && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="font-headline font-bold text-lg text-primary">Envelope Category Spending Allocations</h2>
+            <div>
+              <h2 className="font-headline font-bold text-lg text-primary">Monthly Spending Budgets</h2>
+              <p className="text-xs text-on-surface-variant">Set spending limits for each area of your life to avoid overspending.</p>
+            </div>
             <button
               onClick={() => {
                 setEnvForm({ category: '', allocatedAmount: 250000, spentAmount: 0 });
@@ -312,13 +353,18 @@ export default function IntelligencePage() {
               }}
               className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-container transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <span className="material-symbols-outlined text-[16px]">add</span> Add Envelope
+              <span className="material-symbols-outlined text-[16px]">add</span> Add Budget
             </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-4">
-              {envelopes.map((env) => {
+              {filteredEnvelopes.length === 0 ? (
+                <div className="p-8 text-center bg-surface-lowest border border-outline-variant rounded-2xl text-on-surface-variant text-sm">
+                  No budgets match your search.
+                </div>
+              ) : (
+                filteredEnvelopes.map((env) => {
                 const pct = env.spentAmount / (env.allocatedAmount || 1);
                 const barColor = pct >= 1 ? 'bg-accent' : pct >= env.targetWarningThreshold ? 'bg-tertiary text-primary' : 'bg-secondary';
                 return (
@@ -367,7 +413,7 @@ export default function IntelligencePage() {
                     </div>
                   </div>
                 );
-              })}
+              }))}
             </div>
 
             <div className="p-5 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm">
@@ -441,7 +487,14 @@ export default function IntelligencePage() {
           </div>
 
           <div className="space-y-4">
-            {debtResults.map((debt) => (
+            {filteredDebts.length === 0 ? (
+              <div className="p-8 text-center bg-surface-lowest border border-outline-variant rounded-2xl text-on-surface-variant text-sm">
+                No debts or loans match your search.
+              </div>
+            ) : (
+              debtResults
+                .filter((d) => d.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map((debt) => (
               <div key={debt.id} className="p-5 rounded-2xl bg-surface-lowest border border-outline-variant shadow-sm space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
@@ -489,7 +542,7 @@ export default function IntelligencePage() {
                   </div>
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
       )}

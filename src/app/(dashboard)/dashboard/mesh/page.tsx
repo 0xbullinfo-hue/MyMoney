@@ -70,7 +70,7 @@ export default function MeshPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-headline font-bold text-2xl text-primary">My Money</h1>
-          <p className="text-sm text-on-surface-variant">Manage connected banking facilities and monitor real-time balance telemetry.</p>
+          <p className="text-sm text-on-surface-variant">View all your linked bank accounts, cards, and live balances in one place.</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}

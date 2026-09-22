@@ -46,8 +46,8 @@ export default function DashboardExecutivePage() {
       {/* ═══ Executive Header ═══ */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-outline-variant">
         <div>
-          <h1 className="font-headline font-extrabold text-2xl sm:text-3xl text-primary tracking-tight">ALL MY MONEY</h1>
-          <p className="text-sm text-on-surface-variant">Real-time consolidated liquidity telemetry and bank node control.</p>
+          <h1 className="font-headline font-extrabold text-2xl sm:text-3xl text-primary tracking-tight">All MyMoney</h1>
+          <p className="text-sm text-on-surface-variant">Live consolidated balance across all your linked banks and accounts.</p>
         </div>
         <div className="flex items-center gap-3">
           <button

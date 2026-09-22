@@ -50,32 +50,26 @@ export default function MarketingLandingPage() {
     <div className="min-h-screen bg-surface text-on-surface font-body">
       {/* ═══════════ NAVIGATION ═══════════ */}
       <header className="sticky top-0 z-40 glass-surface border-b border-outline-variant">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="w-3.5 h-3.5 rounded-full bg-secondary-fixed shadow-glow animate-pulse-glow" />
-            <span className="font-headline font-extrabold text-xl text-primary tracking-tight">MyMoney OS</span>
-            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-secondary/15 text-secondary border border-secondary/30 text-[11px] font-mono font-semibold">
-              CBN Open Banking v2.1
-            </span>
+            <img src="/logo.png" alt="MyMoney" className="w-9 h-9 rounded-xl object-contain flex-shrink-0 shadow-sm" />
+            <span className="font-headline font-extrabold text-xl text-primary tracking-tight">MyMoney</span>
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-on-surface-variant">
+            <a href="#how-it-works" className="hover:text-primary transition-colors">How It Works</a>
             <a href="#features" className="hover:text-primary transition-colors">Features</a>
-            <a href="#calculator" className="hover:text-primary transition-colors">Runway Calculator</a>
-            <a href="#pricing" className="hover:text-primary transition-colors">Tiers</a>
-            <a href="/dashboard/mesh" className="text-secondary hover:text-secondary-fixed transition-colors font-semibold">My Money</a>
-            <a href="/dashboard" className="text-primary hover:text-secondary transition-colors font-bold">ALL MY MONEY →</a>
-            <a href="/admin/health" className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-mono">Admin Portal</a>
+            <a href="#payday-preview" className="hover:text-primary transition-colors">Auto-Bills</a>
+            <a href="#calculator" className="hover:text-primary transition-colors">Savings Calculator</a>
+            <a href="#pricing" className="hover:text-primary transition-colors">Pricing</a>
           </nav>
 
           <div className="flex items-center gap-3">
             <button
-              onClick={toggleStealthMode}
-              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-surface-low border border-outline-variant text-xs font-semibold flex items-center gap-1.5 hover:bg-surface-high transition-all text-on-surface"
-              title="Toggle Stealth Balance Obfuscation"
+              onClick={() => openOnboarding('free')}
+              className="px-4 py-2 text-xs sm:text-sm font-semibold text-primary hover:text-secondary transition-colors"
             >
-              <span className="material-symbols-outlined text-[16px]">{stealthModeEnabled ? 'visibility_off' : 'visibility'}</span>
-              <span className="hidden sm:inline">{stealthModeEnabled ? 'Stealth Active' : 'Stealth Mode'}</span>
+              Sign In
             </button>
             <button
               onClick={() => openOnboarding('premium')}
@@ -101,12 +95,25 @@ export default function MarketingLandingPage() {
               exit={{ height: 0, opacity: 0 }}
               className="md:hidden border-t border-outline-variant bg-surface px-4 py-4 space-y-3"
             >
+              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm font-medium text-on-surface">How It Works</a>
               <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm font-medium text-on-surface">Features</a>
-              <a href="#calculator" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm font-medium text-on-surface">Runway Calculator</a>
-              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm font-medium text-on-surface">Tiers</a>
-              <a href="/dashboard/mesh" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm font-semibold text-secondary">My Money</a>
-              <a href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm font-bold text-primary">ALL MY MONEY</a>
-              <a href="/admin/health" className="block py-2 text-xs font-mono text-on-surface-variant">Admin Telemetry</a>
+              <a href="#payday-preview" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm font-medium text-on-surface">Auto-Bills</a>
+              <a href="#calculator" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm font-medium text-on-surface">Savings Calculator</a>
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm font-medium text-on-surface">Pricing</a>
+              <div className="pt-2 border-t border-outline-variant flex gap-2">
+                <button
+                  onClick={() => { setMobileMenuOpen(false); openOnboarding('free'); }}
+                  className="flex-1 py-2 text-center text-sm font-semibold text-primary"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => { setMobileMenuOpen(false); openOnboarding('premium'); }}
+                  className="flex-1 py-2 rounded-xl bg-primary text-white text-center text-sm font-bold"
+                >
+                  Get Started
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -115,39 +122,51 @@ export default function MarketingLandingPage() {
       {/* ═══════════ HERO SECTION ═══════════ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         <div className="lg:col-span-7 space-y-6">
-          <span className="inline-block px-3.5 py-1.5 rounded-full bg-secondary/15 border border-secondary/30 text-secondary font-mono text-xs uppercase tracking-wider font-bold">
-            CBN Open Banking Telemetry Core
-          </span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-secondary/15 border border-secondary/30 text-secondary text-xs font-semibold">
+            <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+            <span>Smart Personal Finance &amp; Bill Automation</span>
+          </div>
           <h1 className="font-headline font-extrabold text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-primary tracking-tight leading-[1.1]">
-            Sovereign Liquidity &amp; Multi-Node Financial Enclave
+            All Your Money, Banks &amp; Bills in One Simple Place.
           </h1>
           <p className="text-on-surface-variant text-base sm:text-lg leading-relaxed max-w-2xl">
-            Unify commercial banks, microfinance facilities, and credit nodes into a sub-second telemetry mesh with automated zombie-debit eradication and payday routing architecture.
+            Connect your commercial and digital banks, stop paying for forgotten subscriptions, and let MyMoney automatically pay your electricity, data, rent, and bills the minute your salary lands.
           </p>
           <div className="pt-4 flex flex-wrap gap-4">
             <button
               onClick={() => openOnboarding('premium')}
               className="px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-primary text-white font-bold text-sm sm:text-base hover:bg-primary-container transition-all shadow-lg active:scale-[0.98]"
             >
-              Deploy Sovereign Enclave
+              Get Started for Free
             </button>
             <a
               href="#calculator"
               className="px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-surface-low border border-outline-variant hover:bg-surface-high text-primary font-bold text-sm sm:text-base transition-all"
             >
-              Simulate Net Velocity Lift
+              Calculate Your Savings
             </a>
+          </div>
+
+          <div className="flex items-center gap-6 pt-2 text-xs text-on-surface-variant">
+            <div className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-secondary text-[16px]">verified_user</span>
+              <span>Read-only bank connections</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-secondary text-[16px]">lock</span>
+              <span>We never store your passwords</span>
+            </div>
           </div>
         </div>
 
-        {/* Live Telemetry Node Display Card */}
+        {/* Live Bank Feed Display Card */}
         <div className="lg:col-span-5 bg-primary-dark text-white p-5 sm:p-6 rounded-3xl border border-outline-variant shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent pointer-events-none" />
           <div className="relative space-y-4">
             <div className="flex items-center justify-between pb-4 border-b border-white/10">
-              <span className="font-mono text-xs text-secondary-fixed uppercase tracking-wider font-semibold">Mesh Ingestion Feed</span>
+              <span className="font-mono text-xs text-secondary-fixed uppercase tracking-wider font-semibold">All MyMoney Live Balance</span>
               <span className="flex items-center gap-2 text-xs text-emerald-400 font-mono">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> 12ms Ping
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Live Sync
               </span>
             </div>
             <div className="space-y-3">
@@ -162,33 +181,33 @@ export default function MarketingLandingPage() {
                   </div>
                   <div className="text-right">
                     <div className="font-mono font-bold text-secondary-fixed text-sm">{formatCurrency(node.bal)}</div>
-                    <div className="text-[10px] font-mono text-emerald-400">🟢 {node.ping}</div>
+                    <div className="text-[10px] font-mono text-emerald-400">Connected</div>
                   </div>
                 </div>
               ))}
             </div>
             <div className="pt-2 text-center">
-              <span className="text-[11px] font-mono text-white/50">Continuous SHA-256 HMAC Verified Ingestion</span>
+              <span className="text-[11px] text-white/60">Protected with Bank-Grade 256-bit Encryption</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ═══════════ FEATURES SECTION (CARDS) ═══════════ */}
+      {/* ═══════════ FEATURES SECTION ═══════════ */}
       <section id="features" className="py-16 sm:py-20 bg-surface-low border-y border-outline-variant">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
-            <h2 className="font-headline font-bold text-2xl sm:text-3xl text-primary mb-3">Financial Intelligence Suite</h2>
-            <p className="text-on-surface-variant max-w-2xl mx-auto">Enterprise-grade modules for total financial sovereignty.</p>
+            <h2 className="font-headline font-bold text-2xl sm:text-3xl text-primary mb-3">Everything You Need to Master Your Money</h2>
+            <p className="text-on-surface-variant max-w-2xl mx-auto">Simple, automated tools to see your total balance, pay bills, and grow savings.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: 'account_balance', title: 'Multi-Node Banking Mesh', desc: 'Aggregate balances across commercial banks, MFBs, and credit lines with sub-second webhook telemetry.' },
-              { icon: 'radar', title: 'Zombie Subscription Radar', desc: 'AI-powered detection of dormant recurring debits bleeding liquidity from your financial enclave.' },
-              { icon: 'trending_down', title: 'Debt Avalanche Simulator', desc: 'Model extra principal injections against loan lifespan to calculate months and interest saved.' },
-              { icon: 'pie_chart', title: 'Envelope Budgeting Engine', desc: 'Category-based spend caps with threshold warnings and real-time overspend alerts.' },
-              { icon: 'visibility_off', title: 'Stealth Obfuscation Mode', desc: 'One-click balance masking across all surfaces for privacy in shared or public environments.' },
-              { icon: 'shield', title: 'AES-256-GCM Security', desc: 'Military-grade encryption for all OAuth tokens with HMAC-verified webhook ingestion.' },
+              { icon: 'account_balance', title: 'All Your Banks in One View', desc: 'See your real-time total net worth across GTBank, Access, Stanbic, Kuda, Zenith, and more in one screen.' },
+              { icon: 'payments', title: 'Payday Auto-Bill Routing', desc: 'Never miss rent or electricity bills again. The moment salary arrives, your essential bills are paid automatically.' },
+              { icon: 'radar', title: 'Unused Subscription Hunter', desc: 'Spot sneaky subscriptions and apps charging your cards that you no longer use, and cancel them in 1 tap.' },
+              { icon: 'pie_chart', title: 'Smart Spending Budgets', desc: 'Set calm monthly allowances for food, transport, and family, with helpful alerts before you overspend.' },
+              { icon: 'trending_down', title: 'Debt Payoff Planner', desc: 'See exactly how putting an extra ₦25,000/month towards loans can shave months off your debt and save big interest.' },
+              { icon: 'lock', title: 'Bank-Grade Security', desc: 'We only use read-only connections. Your funds cannot be moved or withdrawn without your explicit biometric authorization.' },
             ].map((f, i) => (
               <div
                 key={i}
@@ -260,11 +279,12 @@ export default function MarketingLandingPage() {
         </div>
       </section>
 
-      {/* ═══════════ PRICING MATRIX (CARDS) ═══════════ */}
+      {/* ═══════════ PRICING MATRIX ═══════════ */}
       <section id="pricing" className="py-16 sm:py-20 bg-surface-low border-y border-outline-variant">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
           <div className="text-center space-y-4">
-            <h2 className="font-headline font-bold text-2xl sm:text-3xl text-primary">Sovereign Tier Architecture</h2>
+            <h2 className="font-headline font-bold text-2xl sm:text-3xl text-primary">Simple, Transparent Plans</h2>
+            <p className="text-on-surface-variant max-w-xl mx-auto">Start for free or upgrade to automatically route your salary and bills.</p>
             <div className="inline-flex p-1 rounded-xl bg-surface-high border border-outline-variant">
               <button
                 onClick={() => setBillingCycle('monthly')}
@@ -276,7 +296,7 @@ export default function MarketingLandingPage() {
                 onClick={() => setBillingCycle('annual')}
                 className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${billingCycle === 'annual' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}
               >
-                Annual Billing (-20%)
+                Yearly Billing (Save 20%)
               </button>
             </div>
           </div>
@@ -285,72 +305,81 @@ export default function MarketingLandingPage() {
             {/* Free Tier Card */}
             <div className="p-6 sm:p-8 rounded-3xl bg-surface-lowest border border-outline-variant flex flex-col justify-between space-y-6 shadow-sm hover:shadow-enclave transition-all">
               <div className="space-y-4">
-                <h3 className="text-xl font-bold text-primary">Sovereign Free</h3>
-                <div className="text-3xl font-extrabold font-mono text-primary">₦0 <span className="text-xs font-normal text-on-surface-variant">/ mo</span></div>
+                <span className="text-xs font-mono font-bold uppercase text-on-surface-variant">Starter</span>
+                <h3 className="text-xl font-bold text-primary">MyMoney Free</h3>
+                <div className="text-3xl font-extrabold font-mono text-primary">₦0 <span className="text-xs font-normal text-on-surface-variant">/ month forever</span></div>
                 <ul className="space-y-2.5 text-sm text-on-surface-variant">
-                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Max 2 Bank/MFB Nodes</li>
-                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Consolidated Net Worth Dashboard</li>
-                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Standard Daily Transaction Feed</li>
-                  <li className="line-through text-outline flex items-center gap-2">✕ Open Banking Webhook Telemetry</li>
-                  <li className="line-through text-outline flex items-center gap-2">✕ Subscription Radar</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Up to 2 Connected Banks</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Consolidated Net Worth View</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Weekly Spending Summary</li>
+                  <li className="line-through text-outline flex items-center gap-2">✕ Payday Auto-Bill Routing</li>
+                  <li className="line-through text-outline flex items-center gap-2">✕ Subscription Hunter &amp; Auto-Freeze</li>
                 </ul>
               </div>
               <button
                 onClick={() => openOnboarding('free')}
                 className="w-full py-3 rounded-xl bg-surface-high hover:bg-outline/20 text-primary font-bold text-sm transition-all"
               >
-                Deploy Free Bank
+                Get Started Free
               </button>
             </div>
 
-            {/* Premium Tier Card (Recommended) */}
+            {/* MyMoney Plenty (Recommended) */}
             <div className="p-6 sm:p-8 rounded-3xl bg-primary text-white border-2 border-secondary flex flex-col justify-between space-y-6 shadow-2xl relative">
               <span className="absolute top-4 right-4 px-3 py-1 rounded-full bg-secondary-fixed text-primary font-mono text-[10px] font-bold uppercase">
-                Recommended
+                Most Popular
               </span>
               <div className="space-y-4">
-                <h3 className="text-xl font-bold text-white">Sovereign Premium</h3>
+                <span className="text-xs font-mono font-bold uppercase text-secondary-fixed">Smart Automation</span>
+                <h3 className="text-xl font-bold text-white">MyMoney Plenty</h3>
                 <div className="text-3xl font-extrabold font-mono text-secondary-fixed">
-                  {billingCycle === 'annual' ? '₦3,600' : '₦4,500'}
-                  <span className="text-xs font-normal text-white/70"> / mo</span>
+                  {billingCycle === 'annual' ? '₦2,400' : '₦3,000'}
+                  <span className="text-xs font-normal text-white/70"> / month</span>
                 </div>
+                {billingCycle === 'annual' && (
+                  <p className="text-xs text-secondary-fixed font-mono -mt-2">Billed ₦28,800/yr (Saved ₦7,200)</p>
+                )}
                 <ul className="space-y-2.5 text-sm text-white/90">
-                  <li className="flex items-center gap-2"><span className="text-secondary-fixed font-bold">✓</span> Unlimited Bank &amp; MFB Nodes</li>
-                  <li className="flex items-center gap-2"><span className="text-secondary-fixed font-bold">✓</span> Sub-second Open Banking Webhooks</li>
-                  <li className="flex items-center gap-2"><span className="text-secondary-fixed font-bold">✓</span> Subscription Radar &amp; Zombie Hunter</li>
-                  <li className="flex items-center gap-2"><span className="text-secondary-fixed font-bold">✓</span> Debt Avalanche Simulator</li>
-                  <li className="flex items-center gap-2"><span className="text-secondary-fixed font-bold">✓</span> Priority Support Channel</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary-fixed font-bold">✓</span> Unlimited Connected Banks &amp; Cards</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary-fixed font-bold">✓</span> Payday Auto-Bill Routing (Light, Data, Subscriptions)</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary-fixed font-bold">✓</span> Unused Subscription Hunter &amp; 1-Tap Freeze</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary-fixed font-bold">✓</span> Smart Envelope Budgets &amp; Overspend Alerts</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary-fixed font-bold">✓</span> Debt Payoff Planner &amp; Savings Forecaster</li>
                 </ul>
               </div>
               <button
                 onClick={() => openOnboarding('premium')}
                 className="w-full py-3.5 rounded-xl bg-secondary-fixed hover:bg-white text-primary font-bold text-sm transition-all shadow-md"
               >
-                Launch Premium Trial
+                Choose Plenty
               </button>
             </div>
 
-            {/* Premium+ Tier Card */}
+            {/* MyMoney Large */}
             <div className="p-6 sm:p-8 rounded-3xl bg-surface-lowest border border-outline-variant flex flex-col justify-between space-y-6 shadow-sm hover:shadow-enclave transition-all">
               <div className="space-y-4">
-                <h3 className="text-xl font-bold text-primary">Sovereign Premium+</h3>
+                <span className="text-xs font-mono font-bold uppercase text-secondary">Family &amp; Wealth</span>
+                <h3 className="text-xl font-bold text-primary">MyMoney Large</h3>
                 <div className="text-3xl font-extrabold font-mono text-primary">
-                  {billingCycle === 'annual' ? '₦7,200' : '₦9,000'}
-                  <span className="text-xs font-normal text-on-surface-variant"> / mo</span>
+                  {billingCycle === 'annual' ? '₦4,000' : '₦5,000'}
+                  <span className="text-xs font-normal text-on-surface-variant"> / month</span>
                 </div>
+                {billingCycle === 'annual' && (
+                  <p className="text-xs text-secondary font-mono -mt-2">Billed ₦48,000/yr (Saved ₦12,000)</p>
+                )}
                 <ul className="space-y-2.5 text-sm text-on-surface-variant">
-                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Everything in Sovereign Premium</li>
-                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Dynamic Envelope Budgeting Suite</li>
-                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Payday Auto-Routing Architecture</li>
-                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Partner &amp; Shared Household Nodes</li>
-                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Dedicated Account Manager</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Everything in MyMoney Plenty</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Shared Family &amp; Partner Accounts</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Automated Rent &amp; School Fees Sinking Funds</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Automatic 14% p.a. High-Yield Treasury Sweeps</li>
+                  <li className="flex items-center gap-2"><span className="text-secondary font-bold">✓</span> Priority Concierge Support</li>
                 </ul>
               </div>
               <button
                 onClick={() => openOnboarding('premium_plus')}
                 className="w-full py-3.5 rounded-xl bg-primary text-white hover:bg-primary-container font-bold text-sm transition-all shadow-md"
               >
-                Deploy Full OS Suite
+                Choose Large
               </button>
             </div>
           </div>
@@ -362,44 +391,45 @@ export default function MarketingLandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
             <div>
-              <h4 className="font-headline font-bold text-sm text-primary mb-4">Product</h4>
+              <div className="flex items-center gap-2 mb-4">
+                <img src="/logo.png" alt="MyMoney" className="w-6 h-6 rounded object-contain" />
+                <span className="font-headline font-bold text-base text-primary">MyMoney</span>
+              </div>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                The smart money app for Nigerian dual-income households and professionals.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-headline font-bold text-sm text-primary mb-4">Features</h4>
               <ul className="space-y-2 text-sm text-on-surface-variant">
-                <li><a href="#features" className="hover:text-primary transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-primary transition-colors">Pricing</a></li>
-                <li><a href="#calculator" className="hover:text-primary transition-colors">ROI Calculator</a></li>
-                <li><a href="/dashboard" className="hover:text-primary transition-colors">Client OS</a></li>
+                <li><a href="#features" className="hover:text-primary transition-colors">Bank Balances</a></li>
+                <li><a href="#payday-preview" className="hover:text-primary transition-colors">Payday Auto-Bills</a></li>
+                <li><a href="#features" className="hover:text-primary transition-colors">Subscription Hunter</a></li>
+                <li><a href="#pricing" className="hover:text-primary transition-colors">Plans &amp; Pricing</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-headline font-bold text-sm text-primary mb-4">Security</h4>
+              <h4 className="font-headline font-bold text-sm text-primary mb-4">Security &amp; Trust</h4>
               <ul className="space-y-2 text-sm text-on-surface-variant">
-                <li><span className="text-xs font-mono">AES-256-GCM Vault</span></li>
-                <li><span className="text-xs font-mono">HMAC-SHA256 Gateway</span></li>
-                <li><span className="text-xs font-mono">CBN Compliance</span></li>
-                <li><span className="text-xs font-mono">Zero-Knowledge Vault</span></li>
+                <li>Read-Only Bank Sync</li>
+                <li>256-bit Encryption</li>
+                <li>Biometric 2FA Protected</li>
+                <li>NDPR Privacy Compliant</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-headline font-bold text-sm text-primary mb-4">Portals</h4>
+              <h4 className="font-headline font-bold text-sm text-primary mb-4">Company</h4>
               <ul className="space-y-2 text-sm text-on-surface-variant">
-                <li><a href="/dashboard" className="hover:text-primary transition-colors font-semibold">Executive Dashboard</a></li>
-                <li><a href="/dashboard/mesh" className="hover:text-primary transition-colors">Node Mesh</a></li>
-                <li><a href="/dashboard/intelligence" className="hover:text-primary transition-colors">Intelligence Suite</a></li>
-                <li><a href="/admin/health" className="hover:text-secondary-fixed text-secondary font-mono text-xs">Admin Telemetry</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-headline font-bold text-sm text-primary mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-on-surface-variant">
-                <li>Privacy Enclave Policy</li>
+                <li>About MyMoney</li>
+                <li>Privacy Policy</li>
                 <li>Terms of Service</li>
-                <li>CBN Regulatory Disclosures</li>
+                <li>Contact Support</li>
               </ul>
             </div>
           </div>
           <div className="pt-8 border-t border-outline-variant flex flex-col sm:flex-row items-center justify-between text-xs text-on-surface-variant/70 gap-4">
-            <div>&copy; 2026 MyMoney OS Technologies Ltd. Central Bank of Nigeria Open Banking Framework compliant.</div>
-            <div className="font-mono text-[11px] text-secondary">OS Version: 4.8.2-enclave-prod</div>
+            <div>&copy; 2026 MyMoney Technologies Ltd. All rights reserved.</div>
+            <div className="text-xs text-secondary font-medium">Simple, Smart Personal Finances</div>
           </div>
         </div>
       </footer>
@@ -424,22 +454,22 @@ export default function MarketingLandingPage() {
               <div className="space-y-1">
                 <span className="font-mono text-xs text-secondary uppercase font-semibold">Step {onboardingStep} of 3</span>
                 <h3 className="font-headline font-bold text-xl text-primary">
-                  {onboardingStep === 1 && 'Enclave Provisioning'}
-                  {onboardingStep === 2 && 'OAuth Mesh Binding'}
-                  {onboardingStep === 3 && 'Telemetry Synchronization'}
+                  {onboardingStep === 1 && 'Create Your MyMoney Account'}
+                  {onboardingStep === 2 && 'Choose Your Plan'}
+                  {onboardingStep === 3 && 'Connect Your Banks'}
                 </h3>
               </div>
 
               {onboardingStep === 1 && (
                 <div className="space-y-4">
-                  <p className="text-xs text-on-surface-variant">Enter credentials to configure your client-side encrypted vault.</p>
+                  <p className="text-xs text-on-surface-variant">Enter your email and create a password to set up your private financial account.</p>
                   <input
-                    type="email" placeholder="Enclave Admin Email" value={formEmail}
+                    type="email" placeholder="Your Email Address" value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface-low text-sm focus:outline-none focus:border-primary text-on-surface"
                   />
                   <input
-                    type="password" placeholder="Zero-Knowledge Master Password" value={formPassword}
+                    type="password" placeholder="Create a Strong Password" value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface-low text-sm focus:outline-none focus:border-primary text-on-surface"
                   />
@@ -447,7 +477,7 @@ export default function MarketingLandingPage() {
                     onClick={() => setOnboardingStep(2)}
                     className="w-full py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-container transition-all shadow-md"
                   >
-                    Proceed to Node Binding →
+                    Continue to Bank Selection →
                   </button>
                 </div>
               )}
@@ -455,8 +485,8 @@ export default function MarketingLandingPage() {
               {onboardingStep === 2 && (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-on-surface-variant">Select banking nodes ({selectedNodes.length} selected):</span>
-                    {selectedTier === 'free' && <span className="text-tertiary font-mono">Free Tier Max: 2 Nodes</span>}
+                    <span className="text-on-surface-variant">Select the banks you use ({selectedNodes.length} selected):</span>
+                    {selectedTier === 'free' && <span className="text-tertiary font-mono">Free Plan: Up to 2 Banks</span>}
                   </div>
                   <div className="grid grid-cols-2 gap-3 max-h-56 overflow-y-auto">
                     {bankInstitutions.map((bank) => {
@@ -486,7 +516,7 @@ export default function MarketingLandingPage() {
                       onClick={() => { setOnboardingStep(3); handleStep3Init(); }}
                       className="w-2/3 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-container transition-all shadow-md"
                     >
-                      Connect &amp; Bind →
+                      Connect Banks →
                     </button>
                   </div>
                 </div>
@@ -496,21 +526,28 @@ export default function MarketingLandingPage() {
                 <div className="space-y-6 text-center py-4">
                   {isInitializing ? (
                     <div className="space-y-4">
-                      <div className="w-12 h-12 border-4 border-primary border-t-secondary-fixed rounded-full animate-spin mx-auto" />
-                      <div className="font-mono text-xs text-on-surface-variant">Establishing SHA-256 HMAC Telemetry Handshake...</div>
+                      <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto" />
+                      <div className="space-y-1">
+                        <div className="font-bold text-primary">Setting Up Your Private Money View...</div>
+                        <div className="text-xs text-on-surface-variant">Connecting {selectedNodes.length} bank feeds securely...</div>
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="w-12 h-12 bg-emerald-500/20 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
-                        ✓
+                      <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto">
+                        <span className="material-symbols-outlined text-[28px]">check_circle</span>
                       </div>
-                      <h4 className="font-bold text-primary">Enclave Initialized Successfully</h4>
-                      <p className="text-xs text-on-surface-variant">3 banks linked. Real-time balance telemetry active.</p>
+                      <div className="space-y-1">
+                        <h4 className="font-bold text-lg text-primary">Your Account is Ready!</h4>
+                        <p className="text-xs text-on-surface-variant max-w-sm mx-auto">
+                          Your bank connections have been synchronized. You can now track your spending and configure auto-bills.
+                        </p>
+                      </div>
                       <a
                         href="/dashboard"
-                        className="inline-block w-full py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-container transition-all shadow-lg"
+                        className="inline-block w-full py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-container transition-all shadow-md"
                       >
-                        Enter ALL MY MONEY
+                        Enter MyMoney Dashboard →
                       </a>
                     </div>
                   )}

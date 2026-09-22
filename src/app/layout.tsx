@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'MyMoney OS — Sovereign Liquidity & Multi-Node Financial Enclave',
-  description: 'Enterprise-grade personal finance and open banking platform. Unify commercial banks, microfinance facilities, and credit nodes into a sub-second telemetry mesh.',
+  title: 'MyMoney — All Your Money, Banks & Bills in One Place',
+  description: 'Connect all your banks, track your spending, stop money leaks, and automatically pay your bills the minute your salary lands.',
   keywords: ['fintech', 'open banking', 'personal finance', 'Nigeria', 'CBN', 'MyMoney'],
 };
 
