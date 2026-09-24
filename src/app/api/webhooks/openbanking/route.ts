@@ -1,24 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-
-const WEBHOOK_SECRET = process.env.OPENBANKING_WEBHOOK_SECRET || 'fallback-secret-key-32-chars-min!!';
+import { verifyWebhookSignature } from '@/lib/webhook-validator';
 
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get('x-openbanking-signature');
+    const timestamp = req.headers.get('x-openbanking-timestamp');
 
-    if (!signature) {
-      return NextResponse.json({ error: 'Missing x-openbanking-signature header' }, { status: 401 });
-    }
+    const result = verifyWebhookSignature(rawBody, signature, timestamp, {
+      requireTimestamp: !!timestamp,
+    });
 
-    const expectedSignature = crypto
-      .createHmac('sha256', WEBHOOK_SECRET)
-      .update(rawBody)
-      .digest('hex');
-
-    if (signature !== expectedSignature) {
-      return NextResponse.json({ error: 'Invalid HMAC signature payload' }, { status: 403 });
+    if (!result.isValid) {
+      console.error(`[OpenBanking Webhook] Auth failure: ${result.error}`);
+      return new NextResponse(null, { status: 401 });
     }
 
     const payload = JSON.parse(rawBody);
@@ -28,7 +23,8 @@ export async function POST(req: NextRequest) {
       nodeId: payload.node_id,
       timestamp: new Date().toISOString(),
     });
-  } catch {
-    return NextResponse.json({ error: 'Internal telemetry processing failure' }, { status: 500 });
+  } catch (err) {
+    console.error('[OpenBanking Webhook] Internal processing failure:', err);
+    return new NextResponse(null, { status: 500 });
   }
 }
