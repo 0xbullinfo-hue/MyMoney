@@ -1,4 +1,4 @@
-# MyMoney OS — Sovereign Personal Financial Operating System
+# MyMoney — Sovereign Personal Finance
 
 An enterprise-ready personal finance and open banking web application built with **Next.js (App Router)**, **React 19**, **TypeScript**, and **Tailwind CSS**, designed using the warm, sophisticated **05 Earthy Minimal** design token system.
 
@@ -89,4 +89,4 @@ npm run start
 ---
 
 ## 📜 License
-Private & Proprietary — MyMoney OS Technologies Ltd.
+Private & Proprietary — MyMoney Technologies Ltd.

@@ -1,4 +1,4 @@
-# UI/UX Direction & Design System — MyMoney OS
+# UI/UX Direction & Design System — MyMoney
 
 **Design System:** 05 Earthy Minimal  
 **Aesthetic Persona:** Sovereign Financial Editorial & Tactical Enclave  
@@ -9,9 +9,9 @@
 
 ## 1. Design Philosophy: "05 Earthy Minimal"
 
-Traditional consumer fintech apps rely on cold corporate blues, neon purples, and aggressive high-friction gamification. **MyMoney OS rejects this entirely.**
+Traditional consumer fintech apps rely on cold corporate blues, neon purples, and aggressive high-friction gamification. **MyMoney rejects this entirely.**
 
-Instead, MyMoney OS is built around **05 Earthy Minimal**:
+Instead, MyMoney is built around **05 Earthy Minimal**:
 - **Organic Sovereign Dignity:** Deep forest greens, warm desert sands, and terracotta clay inspired by geological resilience and sovereign stewardship.
 - **Tactile Materiality:** Parchment-like alabaster canvases, crisp white elevated cards, and delicate warm-sand hairline borders that feel like premium physical stationery.
 - **Surgical Precision:** Strict monospace typography for numbers, sub-second telemetry pings, and clear cryptographic status indicators.

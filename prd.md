@@ -1,6 +1,6 @@
-# Product Requirements Document (PRD) — MyMoney OS
+# Product Requirements Document (PRD) — MyMoney
 
-**Product Name:** MyMoney OS (Sovereign Personal Financial Operating System)  
+**Product Name:** MyMoney (Sovereign Personal Finance)  
 **Version:** 1.0.0-PROD  
 **Status:** Active Production / Continuously Maintained  
 **Target Markets:** Nigeria, Pan-Africa & Global High-Net-Worth Sovereign Operators  
@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary & Vision
 
-MyMoney OS is a sovereign personal financial operating system engineered for multi-bank account holders, tech executives, founders, and high-earning operators. Unlike conventional consumer budgeting apps that rely on generic categorizations and passive tracking, MyMoney OS treats personal finance as an **active operating system**:
+MyMoney is a sovereign personal financial platform engineered for multi-bank account holders, tech executives, founders, and high-earning operators. Unlike conventional consumer budgeting apps that rely on generic categorizations and passive tracking, MyMoney treats personal finance as an active financial control center:
 - **Multi-Bank Telemetry & Node Orchestration:** Real-time visibility into all commercial, investment, and digital MFB accounts.
 - **Autonomous Payday Routing Engine:** Automated rule-based distribution of incoming funds to utilities, telecoms, rent, investments, and statutory deductions (EMTL, VAT).
 - **Active Subscription Defense:** Zombie subscription detection algorithms with 1-click cryptographic kill switches.
@@ -23,7 +23,7 @@ MyMoney OS is a sovereign personal financial operating system engineered for mul
 
 ### Persona A: The Multi-Bank Professional (Chidi, 32, Tech Lead in Lagos)
 - **Problem:** Holds accounts across GTBank, Stanbic IBTC, Zenith Bank, and Kuda. Faces manual reconciliation friction, surprise subscription debits, and unpredictable bank network downtime.
-- **Solution:** Connects all accounts into MyMoney OS. Monitors real-time bank node latency, tracks aggregated net worth, and executes automated payday waterfall allocation upon salary receipt.
+- **Solution:** Connects all accounts into MyMoney. Monitors real-time bank node latency, tracks aggregated net worth, and executes automated payday waterfall allocation upon salary receipt.
 
 ### Persona B: The Sovereign Founder / Executive (Amina, 41, Managing Director)
 - **Problem:** Requires privacy when viewing financial numbers in public or open offices. Needs real-time cash runway calculations and instant freeze switches for debit cards.

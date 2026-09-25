@@ -1,15 +1,15 @@
-# System Architecture Document — MyMoney OS
+# System Architecture Document — MyMoney
 
-**Product Name:** MyMoney OS (Sovereign Personal Financial Operating System)  
+**Product Name:** MyMoney (Sovereign Personal Finance)  
 **Architecture Version:** 1.0.0-PROD  
 **Target Environment:** Next.js App Router / Edge-compatible Serverless & Node.js  
-**Last Updated:** 2026-09-25  
+**Last Updated:** 2026-09-26  
 
 ---
 
 ## 1. High-Level System Architecture
 
-MyMoney OS is architected as an enterprise-grade financial management system leveraging modern React 19 and Next.js 16 App Router paradigms. The platform combines server-side cryptographic isolation with high-velocity client-side interaction primitives.
+MyMoney is architected as an enterprise-grade financial management system leveraging modern React 19 and Next.js 16 App Router paradigms. The platform combines server-side cryptographic isolation with high-velocity client-side interaction primitives.
 
 ```mermaid
 graph TD

@@ -1,6 +1,6 @@
-# Engineering & Coding Rules — MyMoney OS
+# Engineering & Coding Rules — MyMoney
 
-**Product:** MyMoney OS (Sovereign Personal Financial Operating System)  
+**Product:** MyMoney (Sovereign Personal Finance)  
 **Applicability:** All contributors, automated agents, and pair programmers  
 **Status:** Mandatory & Strictly Enforced  
 
