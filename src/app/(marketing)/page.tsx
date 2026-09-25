@@ -27,6 +27,7 @@ export default function MarketingLandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoutNotice, setLogoutNotice] = useState(false);
   const [authRequiredNotice, setAuthRequiredNotice] = useState(false);
+  const [adminAuthRequiredNotice, setAdminAuthRequiredNotice] = useState(false);
 
   // Form Fields
   const [fullName, setFullName] = useState('');
@@ -50,6 +51,10 @@ export default function MarketingLandingPage() {
       if (urlParams.get('auth_required') === '1') {
         setAuthRequiredNotice(true);
         setTimeout(() => setAuthRequiredNotice(false), 6000);
+      }
+      if (urlParams.get('admin_auth_required') === '1') {
+        setAdminAuthRequiredNotice(true);
+        setTimeout(() => setAdminAuthRequiredNotice(false), 6000);
       }
     }
   }, []);
@@ -154,6 +159,23 @@ export default function MarketingLandingPage() {
             <span className="material-symbols-outlined text-[18px]">shield_lock</span>
             <span>Please sign in to access your dashboard.</span>
             <button onClick={() => setAuthRequiredNotice(false)} className="ml-2 hover:opacity-75">
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {adminAuthRequiredNotice && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-primary/90 text-white text-xs px-4 py-3 text-center flex items-center justify-center gap-2 font-medium"
+          >
+            <span className="material-symbols-outlined text-[18px]">admin_panel_settings</span>
+            <span>Admin access requires authentication. Please sign in with an admin account.</span>
+            <button onClick={() => setAdminAuthRequiredNotice(false)} className="ml-2 hover:opacity-75">
               <span className="material-symbols-outlined text-[16px]">close</span>
             </button>
           </motion.div>
