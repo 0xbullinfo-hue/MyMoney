@@ -6,8 +6,13 @@ export async function GET(request: Request) {
   const category = searchParams.get('category');
   const type = searchParams.get('type');
   const search = searchParams.get('search');
-  const page = parseInt(searchParams.get('page') || '1');
-  const limit = parseInt(searchParams.get('limit') || '25');
+
+  // Validate page and limit to prevent negative slice() start (page=0 bug)
+  // and unbounded result sets.
+  const rawPage = parseInt(searchParams.get('page') ?? '', 10);
+  const rawLimit = parseInt(searchParams.get('limit') ?? '', 10);
+  const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
+  const limit = Number.isFinite(rawLimit) && rawLimit >= 1 ? Math.min(rawLimit, 100) : 25;
 
   await new Promise((resolve) => setTimeout(resolve, 300));
 

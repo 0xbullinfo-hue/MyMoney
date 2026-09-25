@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStealth } from '@/hooks/use-stealth';
 import { initialBillRoutes, initialPaydayRules, initialUserCards, billerCatalog } from '@/lib/mock-data/payday-routes';
 import type { BillRouteItem, PaydayInflowRule, InflowExecutionLog, UserCardItem, BillerCatalogItem, BillerPlanOption } from '@/types/payday';
+
+const DEMO_OTP = '849210';
 
 export default function PaydayHubPage() {
   const { formatCurrency } = useStealth();
@@ -21,7 +23,7 @@ export default function PaydayHubPage() {
   const [simLog, setSimLog] = useState<InflowExecutionLog | null>(null);
 
   // New/Edit Bill Modal
-  const [editingBill, setEditingBill] = useState<BillRouteItem | null>(null);
+  const [editingBillId, setEditingBillId] = useState<string | null>(null);
   const [isAddingBill, setIsAddingBill] = useState(false);
   const [selectedCatalogId, setSelectedCatalogId] = useState<string>('cat_netflix');
   const [selectedPlanId, setSelectedPlanId] = useState<string>('net_premium');
@@ -42,6 +44,13 @@ export default function PaydayHubPage() {
   const [otpError, setOtpError] = useState('');
   const [otpResendSeconds, setOtpResendSeconds] = useState(45);
 
+  // Countdown for the OTP resend link (starts whenever the OTP modal opens)
+  useEffect(() => {
+    if (!isOtpModalOpen || otpResendSeconds <= 0) return;
+    const timer = setTimeout(() => setOtpResendSeconds((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [isOtpModalOpen, otpResendSeconds]);
+
   // Filter bills
   const filteredBills = bills.filter((b) => {
     const matchesSearch = b.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
@@ -53,6 +62,10 @@ export default function PaydayHubPage() {
   const totalAutoScheduled = bills
     .filter((b) => b.isAutoEnabled && !rules.globalFreezeActive)
     .reduce((sum, b) => sum + b.targetAmount, 0);
+
+  // Levy must match the execution engine below: 7.5% VAT + N50 EMTL per active bill
+  const activeBillCount = bills.filter((b) => b.isAutoEnabled && !rules.globalFreezeActive).length;
+  const estimatedLevy = Math.round(totalAutoScheduled * 0.075) + activeBillCount * 50;
 
   // Toggle individual bill auto state
   const toggleBillAuto = (id: string) => {
@@ -93,7 +106,8 @@ export default function PaydayHubPage() {
 
   // Step 2: Validate OTP and Execute Payments
   const handleVerifyOtpAndPay = () => {
-    if (otpCode.trim() !== '849210' && otpCode.trim().length !== 6) {
+    const code = otpCode.trim();
+    if (code.length !== 6 || code !== DEMO_OTP) {
       setOtpError('Invalid OTP code. Please enter the 6-digit verification code (Demo: 849210).');
       return;
     }
@@ -148,31 +162,55 @@ export default function PaydayHubPage() {
     window.print();
   };
 
-  // Save selected bill from catalog
+  // Save selected bill from catalog (creates or updates if editing)
   const handleSaveCatalogBill = () => {
     const catalogItem = billerCatalog.find((c) => c.id === selectedCatalogId);
     if (!catalogItem) return;
     const plan = catalogItem.plans.find((p) => p.id === selectedPlanId) || catalogItem.plans[0];
     const card = cards.find((c) => c.id === customCardId) || cards[0];
 
-    const newBill: BillRouteItem = {
-      id: `bill_${Date.now()}`,
-      name: `${catalogItem.name} (${plan.name})`,
-      category: catalogItem.category,
-      categoryLabel: catalogItem.categoryLabel,
-      icon: catalogItem.icon,
-      targetAmount: plan.amount,
-      maxSpendingCap: Math.round(plan.amount * 1.2),
-      billerIdentifier: customBillerId || 'Registered Account',
-      assignedPaymentSourceId: card ? card.id : 'card_01',
-      assignedPaymentSourceName: card ? `${card.bankName} (•••• ${card.last4})` : 'GTBank (•••• 0491)',
-      selectedPlanId: plan.id,
-      isAutoEnabled: true,
-      status: 'active',
-      description: plan.description,
-    };
+    if (editingBillId) {
+      setBills((prev) =>
+        prev.map((b) =>
+          b.id === editingBillId
+            ? {
+                ...b,
+                name: `${catalogItem.name} (${plan.name})`,
+                category: catalogItem.category,
+                categoryLabel: catalogItem.categoryLabel,
+                icon: catalogItem.icon,
+                targetAmount: plan.amount,
+                maxSpendingCap: Math.round(plan.amount * 1.2),
+                billerIdentifier: customBillerId || 'Registered Account',
+                assignedPaymentSourceId: card ? card.id : 'card_01',
+                assignedPaymentSourceName: card ? `${card.bankName} (•••• ${card.last4})` : 'GTBank (•••• 0491)',
+                selectedPlanId: plan.id,
+                description: plan.description,
+              }
+            : b
+        )
+      );
+      setEditingBillId(null);
+    } else {
+      const newBill: BillRouteItem = {
+        id: `bill_${Date.now()}`,
+        name: `${catalogItem.name} (${plan.name})`,
+        category: catalogItem.category,
+        categoryLabel: catalogItem.categoryLabel,
+        icon: catalogItem.icon,
+        targetAmount: plan.amount,
+        maxSpendingCap: Math.round(plan.amount * 1.2),
+        billerIdentifier: customBillerId || 'Registered Account',
+        assignedPaymentSourceId: card ? card.id : 'card_01',
+        assignedPaymentSourceName: card ? `${card.bankName} (•••• ${card.last4})` : 'GTBank (•••• 0491)',
+        selectedPlanId: plan.id,
+        isAutoEnabled: true,
+        status: 'active',
+        description: plan.description,
+      };
 
-    setBills([newBill, ...bills]);
+      setBills([newBill, ...bills]);
+    }
     setIsAddingBill(false);
   };
 
@@ -325,7 +363,7 @@ export default function PaydayHubPage() {
           />
         </div>
 
-        <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto">
+        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
           {[
             { id: 'all', label: 'All Bills' },
             { id: 'utilities', label: 'Electricity' },
@@ -337,7 +375,7 @@ export default function PaydayHubPage() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
                 selectedCategory === cat.id ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:bg-surface-low'
               }`}
             >
@@ -351,9 +389,9 @@ export default function PaydayHubPage() {
               setCustomBillerId('');
               setIsAddingBill(true);
             }}
-            className="px-3.5 py-1.5 rounded-xl bg-primary text-white text-xs font-bold flex items-center gap-1 ml-2 whitespace-nowrap"
+            className="px-3.5 py-1.5 rounded-xl bg-primary text-white text-xs font-bold flex items-center gap-1 ml-1 whitespace-nowrap flex-shrink-0"
           >
-            <span className="material-symbols-outlined text-[16px]">add</span> Add Bill Option
+            <span className="material-symbols-outlined text-[16px]">add</span> Add Bill
           </button>
         </div>
       </div>
@@ -380,6 +418,9 @@ export default function PaydayHubPage() {
 
               {/* Toggle Auto Switch */}
               <button
+                role="switch"
+                aria-checked={bill.isAutoEnabled && !rules.globalFreezeActive}
+                aria-label={`Toggle auto-payment for ${bill.name}`}
                 onClick={() => toggleBillAuto(bill.id)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
                   bill.isAutoEnabled && !rules.globalFreezeActive ? 'bg-secondary' : 'bg-outline-variant'
@@ -415,7 +456,13 @@ export default function PaydayHubPage() {
               <span>Last paid: {bill.lastSettledDate || 'Pending next payday'}</span>
               <button
                 onClick={() => {
-                  setEditingBill(bill);
+                  const catalogMatch = billerCatalog.find((c) => bill.name.startsWith(c.name)) || billerCatalog[0];
+                  setSelectedCatalogId(catalogMatch.id);
+                  setSelectedPlanId(bill.selectedPlanId || catalogMatch.plans[0]?.id || '');
+                  setCustomBillerId(bill.billerIdentifier === 'Registered Account' ? '' : bill.billerIdentifier);
+                  setCustomCardId(bill.assignedPaymentSourceId);
+                  setEditingBillId(bill.id);
+                  setIsAddingBill(true);
                 }}
                 className="text-primary font-semibold hover:underline"
               >
@@ -470,11 +517,11 @@ export default function PaydayHubPage() {
                 </div>
                 <div className="flex justify-between text-on-surface-variant">
                   <span>Estimated VAT &amp; EMTL Surcharge:</span>
-                  <span className="font-mono text-primary">{formatCurrency(Math.round(totalAutoScheduled * 0.075) + 300)}</span>
+                  <span className="font-mono text-primary">{formatCurrency(estimatedLevy)}</span>
                 </div>
                 <div className="flex justify-between pt-1 border-t border-outline-variant/60 font-bold text-primary text-sm">
                   <span>Total Debit Amount:</span>
-                  <span className="font-mono text-secondary">{formatCurrency(totalAutoScheduled + Math.round(totalAutoScheduled * 0.075) + 300)}</span>
+                  <span className="font-mono text-secondary">{formatCurrency(totalAutoScheduled + estimatedLevy)}</span>
                 </div>
               </div>
 
@@ -565,7 +612,9 @@ export default function PaydayHubPage() {
                       setOtpCode(e.target.value.replace(/\D/g, ''));
                       setOtpError('');
                     }}
-                    placeholder="849210"
+                    placeholder="••••••"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
                     className="w-full text-center tracking-[0.4em] font-mono font-extrabold text-xl py-3 px-4 rounded-xl border border-outline-variant bg-surface-low text-primary focus:outline-none focus:border-primary"
                   />
                 </div>
@@ -579,8 +628,21 @@ export default function PaydayHubPage() {
 
                 {/* Helper pill to fill demo OTP */}
                 <div className="flex items-center justify-between text-[11px] pt-1 text-on-surface-variant">
-                  <span>Demo code: <button type="button" onClick={() => setOtpCode('849210')} className="font-mono font-bold text-secondary underline hover:opacity-80">849210</button></span>
-                  <span>Resend in {otpResendSeconds}s</span>
+                  <span>Demo code: <button type="button" onClick={() => setOtpCode(DEMO_OTP)} className="font-mono font-bold text-secondary underline hover:opacity-80">{DEMO_OTP}</button></span>
+                  {otpResendSeconds > 0 ? (
+                    <span>Resend in {otpResendSeconds}s</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOtpResendSeconds(45);
+                        setOtpError('');
+                      }}
+                      className="font-mono font-bold text-secondary underline hover:opacity-80"
+                    >
+                      Resend Code
+                    </button>
+                  )}
                 </div>
               </div>
 

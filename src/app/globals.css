@@ -66,75 +66,68 @@
   }
 }
 
-/* ═══════════ DIRECT EARTHY MINIMAL UTILITIES ═══════════ */
-.bg-primary { background-color: #2E3A2F !important; }
-.text-primary { color: #2E3A2F !important; }
+/* ═══════════ EARTHY MINIMAL OVERRIDES (no !important — let Tailwind variants win) ═══════════
+   These refine colors that @theme cannot express (e.g. readable text-on-sand).
+   Composite card styles are kept; plain token utilities come from @theme. */
+.bg-primary { background-color: #2E3A2F; }
+.text-primary { color: #2E3A2F; }
 
-.bg-primary-container { background-color: #3C4B3D !important; }
-.hover\:bg-primary-container:hover { background-color: #3C4B3D !important; }
+.bg-primary-container { background-color: #3C4B3D; }
+.bg-primary-dark { background-color: #1B241C; }
+.text-primary-dark { color: #1B241C; }
 
-.bg-primary-dark { background-color: #1B241C !important; }
-.text-primary-dark { color: #1B241C !important; }
+.bg-secondary { background-color: #6B7F5B; }
+.text-secondary { color: #6B7F5B; }
 
-.bg-secondary { background-color: #6B7F5B !important; }
-.text-secondary { color: #6B7F5B !important; }
+.bg-secondary-fixed { background-color: #8EA27E; }
+.text-secondary-fixed { color: #8EA27E; }
 
-.bg-secondary-fixed { background-color: #8EA27E !important; }
-.text-secondary-fixed { color: #8EA27E !important; }
+.bg-tertiary { background-color: #D9C9B2; }
+.text-tertiary { color: #8A6E4B; }
 
-.bg-tertiary { background-color: #D9C9B2 !important; }
-.text-tertiary { color: #8A6E4B !important; }
+.bg-tertiary-container { background-color: #EFE6D8; }
+.text-tertiary-container { color: #5C4A33; }
 
-.bg-tertiary-container { background-color: #EFE6D8 !important; }
-.text-tertiary-container { color: #5C4A33 !important; }
+.bg-accent { background-color: #C96F4F; }
+.text-accent { color: #C96F4F; }
 
-.bg-accent { background-color: #C96F4F !important; }
-.text-accent { color: #C96F4F !important; }
-
-.bg-surface { background-color: #F8F6EE !important; }
+.bg-surface { background-color: #F8F6EE; }
 
 /* Elevated Card Container in Earthy Minimal */
 .bg-surface-lowest {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(217, 201, 178, 0.65) !important;
-  box-shadow: 0 4px 20px -2px rgba(46, 58, 47, 0.06), 0 2px 6px -1px rgba(46, 58, 47, 0.03) !important;
+  background-color: #FFFFFF;
+  border: 1px solid rgba(217, 201, 178, 0.65);
+  box-shadow: 0 4px 20px -2px rgba(46, 58, 47, 0.06), 0 2px 6px -1px rgba(46, 58, 47, 0.03);
 }
 
 .bg-surface-low {
-  background-color: #F0EDE4 !important;
-  border: 1px solid rgba(217, 201, 178, 0.5) !important;
+  background-color: #F0EDE4;
+  border: 1px solid rgba(217, 201, 178, 0.5);
 }
 
 .bg-surface-high {
-  background-color: #E3DDD0 !important;
+  background-color: #E3DDD0;
 }
 
-.border-outline { border-color: #D9C9B2 !important; }
-.border-outline-variant { border-color: rgba(217, 201, 178, 0.65) !important; }
+.border-outline { border-color: #D9C9B2; }
+.border-outline-variant { border-color: rgba(217, 201, 178, 0.65); }
 
-[class*="border-outline-variant"] {
-  border-color: rgba(217, 201, 178, 0.65) !important;
-}
-[class*="border-outline\/"] {
-  border-color: #D9C9B2 !important;
-}
-
-.text-on-surface { color: #2E3A2F !important; }
-.text-on-surface-variant { color: #5E695B !important; }
+.text-on-surface { color: #2E3A2F; }
+.text-on-surface-variant { color: #5E695B; }
 
 .shadow-enclave {
-  box-shadow: 0 8px 32px 0 rgba(46, 58, 47, 0.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(46, 58, 47, 0.1);
 }
 
 .shadow-glow {
-  box-shadow: 0 0 20px 0 rgba(107, 127, 91, 0.35) !important;
+  box-shadow: 0 0 20px 0 rgba(107, 127, 91, 0.35);
 }
 
 /* Admin Card in Dark Forest Theme */
 .admin-card {
-  background-color: #243025 !important;
-  border: 1px solid rgba(142, 162, 126, 0.3) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+  background-color: #243025;
+  border: 1px solid rgba(142, 162, 126, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 @layer utilities {
@@ -237,3 +230,21 @@ input[type="range"]::-moz-range-thumb {
   border: 2px solid #FFFFFF;
   box-shadow: 0 2px 8px rgba(46, 58, 47, 0.35);
 }
+
+/* ═══════════ PRINT STYLES (Invoices, Receipts & Statements) ═══════════ */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  aside, header, nav, .no-print {
+    display: none !important;
+  }
+  .invoice-print {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+}
+

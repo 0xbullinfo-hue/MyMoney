@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useStealth } from '@/hooks/use-stealth';
 import { mockTransactions } from '@/lib/mock-data/transactions';
 import { formatRelativeTime } from '@/lib/formatters';
@@ -17,9 +18,17 @@ const categoryMeta: Record<Transaction['category'], { color: string; bg: string;
   Transfers: { color: '#B5987A', bg: 'bg-[#B5987A]/15 border-[#B5987A]/40', text: 'text-[#8A6A4B]', icon: 'sync_alt', desc: 'Inter-bank rebalancing & family support' },
 };
 
-export default function LedgerPage() {
+function LedgerContent() {
   const { formatCurrency } = useStealth();
-  const [search, setSearch] = useState('');
+  const searchParams = useSearchParams();
+  const queryParam = searchParams.get('q');
+  const [search, setSearch] = useState(queryParam || '');
+
+  useEffect(() => {
+    if (queryParam !== null) {
+      setSearch(queryParam);
+    }
+  }, [queryParam]);
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('');
   const [sortBy, setSortBy] = useState<'timestamp' | 'amount'>('timestamp');
@@ -269,8 +278,54 @@ export default function LedgerPage() {
         </select>
       </div>
 
-      {/* ═══ Transaction Table ═══ */}
-      <div className="overflow-x-auto rounded-3xl border border-outline-variant bg-surface-lowest shadow-sm">
+      {/* ═══ Mobile Transaction Cards (< sm screens) ═══ */}
+      <div className="sm:hidden space-y-2.5">
+        {paged.length === 0 ? (
+          <div className="p-8 text-center rounded-2xl bg-surface-lowest border border-outline-variant text-on-surface-variant text-xs">
+            No transactions match the selected filters.
+          </div>
+        ) : (
+          paged.map((tx) => {
+            const meta = categoryMeta[tx.category];
+            return (
+              <div
+                key={tx.id}
+                className="p-3.5 rounded-2xl bg-surface-lowest border border-outline-variant shadow-xs space-y-2"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${meta.bg}`}>
+                      <span className={`material-symbols-outlined text-[18px] ${meta.text}`}>{meta.icon}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-xs text-primary truncate">{tx.description}</div>
+                      <div className="text-[10px] text-on-surface-variant truncate">{tx.merchantName} • {tx.institutionName}</div>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className={`font-mono font-bold text-xs ${tx.type === 'credit' ? 'text-emerald-700' : 'text-primary'}`}>
+                      {tx.type === 'credit' ? '+' : '-'}{formatCurrency(Math.abs(tx.amount))}
+                    </div>
+                    <div className="text-[9px] font-mono text-on-surface-variant mt-0.5">{formatRelativeTime(tx.timestamp)}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1.5 border-t border-outline-variant/30 text-[10px]">
+                  <span className={`px-2 py-0.5 rounded-full font-bold border ${meta.bg} ${meta.text}`}>
+                    {tx.category}
+                  </span>
+                  <span className="font-mono text-on-surface-variant">
+                    {new Date(tx.timestamp).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* ═══ Desktop Transaction Table (>= sm screens) ═══ */}
+      <div className="hidden sm:block overflow-x-auto rounded-3xl border border-outline-variant bg-surface-lowest shadow-sm">
         <table className="w-full min-w-[700px] text-left">
           <thead>
             <tr className="border-b border-outline-variant/40 bg-surface-low text-xs text-on-surface-variant font-mono">
@@ -353,5 +408,13 @@ export default function LedgerPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function LedgerPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs font-mono text-on-surface-variant">Loading Ledger...</div>}>
+      <LedgerContent />
+    </Suspense>
   );
 }

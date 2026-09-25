@@ -259,7 +259,7 @@ export default function UserProfilePage() {
                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-secondary font-semibold">
                   <span className="flex items-center gap-1">✓ Payday Auto-Bills Enabled</span>
                   <span className="flex items-center gap-1">✓ Up to 5 Bank Nodes</span>
-                  <span className="flex items-center gap-1">✓ 14% Daily Compound Sweeps</span>
+                  <span className="flex items-center gap-1">✓ 14% p.a. High-Yield Sweeps</span>
                 </div>
               </div>
             </div>
@@ -619,7 +619,7 @@ export default function UserProfilePage() {
                 </div>
 
                 {/* 6 Digit Input Boxes */}
-                <div className="flex justify-center gap-2 sm:gap-3 py-2">
+                <div className="flex justify-center gap-1.5 sm:gap-3 py-2">
                   {otpDigits.map((digit, idx) => (
                     <input
                       key={idx}
@@ -634,7 +634,7 @@ export default function UserProfilePage() {
                       onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                       onPaste={idx === 0 ? handleOtpPaste : undefined}
                       autoFocus={idx === 0}
-                      className="w-11 h-13 sm:w-12 sm:h-14 rounded-2xl border border-outline-variant bg-surface-low text-center font-mono font-extrabold text-xl text-primary focus:border-primary focus:ring-2 focus:ring-primary/20 outline-hidden transition-all shadow-xs"
+                      className="w-10 h-12 sm:w-12 sm:h-14 rounded-xl sm:rounded-2xl border border-outline-variant bg-surface-low text-center font-mono font-extrabold text-lg sm:text-xl text-primary focus:border-primary focus:ring-2 focus:ring-primary/20 outline-hidden transition-all shadow-xs"
                     />
                   ))}
                 </div>
@@ -721,7 +721,7 @@ export default function UserProfilePage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-emerald-600 font-bold">✓</span>
-                      <span><strong>14% High-Yield Sweeps:</strong> Idle cash swept into daily compound interest.</span>
+                      <span><strong>14% High-Yield Sweeps:</strong> Idle cash swept into 14% p.a. (per annum) high-yield accounts.</span>
                     </div>
                   </div>
                 </div>

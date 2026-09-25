@@ -17,6 +17,7 @@ export interface User {
   email: string;
   name: string;
   tier: SubscriptionTier;
+  suspended: boolean;
   stealthModeEnabled: boolean;
   globalCardFreeze: boolean;
   createdAt: string;

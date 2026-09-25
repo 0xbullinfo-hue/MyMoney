@@ -13,10 +13,16 @@ const latencyData = mockAdminEndpoints.map((ep) => ({
   fill: ep.status === 200 ? tokens.secondaryFixed : tokens.tertiary,
 }));
 
+// Deterministic seed generator to avoid SSR hydration mismatches
+const seeded = (seed: number) => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
 const webhookTimeline = Array.from({ length: 24 }, (_, i) => ({
   hour: `${23 - i}h`,
-  success: Math.floor(Math.random() * 40 + 60),
-  failed: Math.floor(Math.random() * 5),
+  success: Math.floor(seeded(i + 1) * 40 + 60),
+  failed: Math.floor(seeded(i + 42) * 5),
 })).reverse();
 
 export default function AdminHealthPage() {
@@ -133,10 +139,10 @@ export default function AdminHealthPage() {
             <thead>
               <tr className="border-b border-white/10">
                 <th className="px-4 py-3 text-left text-[10px] font-mono text-white/40 uppercase">Endpoint</th>
-                <th className="px-4 py-3 text-left text-[10px] font-mono text-white/40 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-[10px] font-mono text-white/40 uppercase">HTTP</th>
                 <th className="px-4 py-3 text-left text-[10px] font-mono text-white/40 uppercase">Latency</th>
                 <th className="px-4 py-3 text-left text-[10px] font-mono text-white/40 uppercase">Signature</th>
-                <th className="px-4 py-3 text-left text-[10px] font-mono text-white/40 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-[10px] font-mono text-white/40 uppercase">Result</th>
               </tr>
             </thead>
             <tbody>

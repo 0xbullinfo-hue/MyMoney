@@ -29,6 +29,14 @@ export const useStealth = create<StealthState>()(
         }).format(amount);
       },
     }),
-    { name: 'mymoney-stealth-vault' }
+    {
+      name: 'mymoney-stealth-vault',
+      version: 1,
+      // Only persist serializable flags — never functions or derived state.
+      partialize: (state) => ({
+        stealthModeEnabled: state.stealthModeEnabled,
+        globalCardFreeze: state.globalCardFreeze,
+      }),
+    }
   )
 );

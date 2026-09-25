@@ -26,6 +26,7 @@ export default function MarketingLandingPage() {
   const [isInitializing, setIsInitializing] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoutNotice, setLogoutNotice] = useState(false);
+  const [authRequiredNotice, setAuthRequiredNotice] = useState(false);
 
   // Form Fields
   const [fullName, setFullName] = useState('');
@@ -38,13 +39,17 @@ export default function MarketingLandingPage() {
   const [savingsRate, setSavingsRate] = useState<number>(20);
   const [annualYield, setAnnualYield] = useState<number>(14.0);
 
-  // Check if user just logged out
+  // Check if user just logged out or was redirected from a protected route
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('logged_out') === '1') {
         setLogoutNotice(true);
         setTimeout(() => setLogoutNotice(false), 6000);
+      }
+      if (urlParams.get('auth_required') === '1') {
+        setAuthRequiredNotice(true);
+        setTimeout(() => setAuthRequiredNotice(false), 6000);
       }
     }
   }, []);
@@ -61,7 +66,6 @@ export default function MarketingLandingPage() {
   const annualInterest = Math.round(Math.max(0, futureValue - principalOneYear));
   const totalStashOneYear = Math.round(futureValue);
   const subscriptionSavings = 78000; // Average annual savings from catching zombie subscriptions
-  const netWealthGain = annualInterest + subscriptionSavings;
 
   const toggleNodeSelection = (id: string) => {
     const limit = selectedTier === 'free' ? 2 : Infinity;
@@ -87,29 +91,27 @@ export default function MarketingLandingPage() {
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem(
-        'auth_user',
-        JSON.stringify({
-          email: formEmail || 'user@mymoney.ng',
-          name: 'Adewale Okonkwo',
-          plan: 'MyMoney Plenty',
-        })
-      );
+      document.cookie = 'mm_session=demo; path=/; max-age=86400; SameSite=Lax';
+      const userData = JSON.stringify({
+        email: formEmail || 'user@mymoney.ng',
+        name: 'Adekunle Okonkwo',
+        plan: 'MyMoney Plenty',
+      });
+      sessionStorage.setItem('auth_user', userData);
       window.location.href = '/dashboard';
     }
   };
 
   const handleRegisterComplete = () => {
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem(
-        'auth_user',
-        JSON.stringify({
-          email: formEmail || 'user@mymoney.ng',
-          name: fullName || 'New User',
-          phone: formPhone,
-          plan: selectedTier === 'free' ? 'MyMoney Free' : 'MyMoney Plenty',
-        })
-      );
+      document.cookie = 'mm_session=demo; path=/; max-age=86400; SameSite=Lax';
+      const userData = JSON.stringify({
+        email: formEmail || 'user@mymoney.ng',
+        name: fullName || 'New User',
+        phone: formPhone,
+        plan: selectedTier === 'free' ? 'MyMoney Free' : 'MyMoney Plenty',
+      });
+      sessionStorage.setItem('auth_user', userData);
       window.location.href = '/dashboard';
     }
   };
@@ -134,6 +136,24 @@ export default function MarketingLandingPage() {
             <span className="material-symbols-outlined text-[18px] text-secondary">lock</span>
             <span>You have been securely logged out. Session tokens and saved passwords have been purged for your protection.</span>
             <button onClick={() => setLogoutNotice(false)} className="ml-2 hover:opacity-75">
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════ AUTH REQUIRED BANNER ═══════════ */}
+      <AnimatePresence>
+        {authRequiredNotice && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-accent/90 text-white text-xs px-4 py-3 text-center flex items-center justify-center gap-2 font-medium"
+          >
+            <span className="material-symbols-outlined text-[18px]">shield_lock</span>
+            <span>Please sign in to access your dashboard.</span>
+            <button onClick={() => setAuthRequiredNotice(false)} className="ml-2 hover:opacity-75">
               <span className="material-symbols-outlined text-[16px]">close</span>
             </button>
           </motion.div>
@@ -483,7 +503,7 @@ export default function MarketingLandingPage() {
               <div className="p-3.5 rounded-xl bg-white/10 border border-white/15 space-y-1">
                 <div className="text-xs font-bold text-secondary-fixed flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px]">verified</span>
-                  <span>Plus ₦{formatCurrency(subscriptionSavings)} Subscriptions Saved</span>
+                  <span>Plus {formatCurrency(subscriptionSavings)} in Subscriptions Saved</span>
                 </div>
                 <p className="text-[11px] text-white/80 leading-relaxed">
                   MyMoney automatically blocks forgotten subscriptions and sweeps your leftover salary into high-yield 14%+ accounts.
@@ -715,7 +735,7 @@ export default function MarketingLandingPage() {
                       <input
                         type="password"
                         required
-                        autoComplete="new-password"
+                        autoComplete="current-password"
                         placeholder="••••••••••••"
                         value={formPassword}
                         onChange={(e) => setFormPassword(e.target.value)}
@@ -857,7 +877,7 @@ export default function MarketingLandingPage() {
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
                         {filteredBanks.map((bank) => {
                           const isSel = selectedNodes.includes(bank.id);
                           return (

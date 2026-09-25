@@ -47,19 +47,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Mobile Nav */}
-        <nav className="md:hidden flex justify-around border-b border-white/10 bg-primary-dark px-2 py-2">
-          {adminNav.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link key={item.href} href={item.href}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-[10px] font-medium ${isActive ? 'text-secondary-fixed' : 'text-white/50'}`}>
-                <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Mobile Header & Nav */}
+        <div className="md:hidden border-b border-white/10 bg-primary-dark">
+          <div className="px-4 py-2.5 flex items-center justify-between border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-glow animate-pulse" />
+              <span className="font-headline font-bold text-sm tracking-tight text-white">Admin OS</span>
+            </div>
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1 text-[11px] text-secondary-fixed font-semibold hover:underline"
+            >
+              <span className="material-symbols-outlined text-[15px]">arrow_back</span>
+              <span>Back to App</span>
+            </Link>
+          </div>
+          <nav className="flex justify-around px-2 py-1.5">
+            {adminNav.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link key={item.href} href={item.href}
+                  className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-[10px] font-medium transition-colors ${isActive ? 'text-secondary-fixed font-bold' : 'text-white/60'}`}>
+                  <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
         <main className="flex-1 overflow-auto">
           <AnimatePresence mode="wait">

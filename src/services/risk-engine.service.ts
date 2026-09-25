@@ -39,8 +39,27 @@ export function calculateDebtPayoff(
   apr: number,
   minPayment: number,
   extraPayment: number
-): { monthsWithout: number; monthsWith: number; interestSaved: number } {
+): {
+  monthsWithout: number;
+  monthsWith: number;
+  interestSaved: number;
+  /** true when minPayment is too small to ever pay off the debt */
+  negativeAmortization: boolean;
+} {
   const monthlyRate = apr / 100 / 12;
+
+  // Guard: if the minimum payment doesn't cover the first month's interest the
+  // balance will grow on every iteration — never converging. Return an error
+  // state rather than silently running 600 loops and producing garbage output.
+  const firstMonthInterest = balance * monthlyRate;
+  if (monthlyRate > 0 && minPayment <= firstMonthInterest) {
+    return {
+      monthsWithout: 0,
+      monthsWith: 0,
+      interestSaved: 0,
+      negativeAmortization: true,
+    };
+  }
 
   let balanceWithout = balance;
   let monthsWithout = 0;
@@ -69,5 +88,6 @@ export function calculateDebtPayoff(
     monthsWithout,
     monthsWith,
     interestSaved: Math.round(totalInterestWithout - totalInterestWith),
+    negativeAmortization: false,
   };
 }

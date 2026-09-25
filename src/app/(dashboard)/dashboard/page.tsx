@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useStealth } from '@/hooks/use-stealth';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
@@ -10,7 +9,7 @@ export default function DashboardExecutivePage() {
   const { stealthModeEnabled, globalCardFreeze, toggleStealthMode, toggleGlobalCardFreeze, formatCurrency } = useStealth();
   const [extraPayment, setExtraPayment] = useState(50000);
   const [isSyncingNode, setIsSyncingNode] = useState<string | null>(null);
-  const [slideIndex, setSlideIndex] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
 
   // 5 Connected Bank Nodes with Distinct High-Contrast Theme Color Tags
   const [nodes, setNodes] = useState([
@@ -50,10 +49,16 @@ export default function DashboardExecutivePage() {
 
   const monthsSaved = Math.round(extraPayment / 15000) + 8;
 
-  // Carousel slide handlers (Max 5 nodes, showing 3 per view on desktop)
-  const maxSlide = Math.max(0, nodes.length - 3);
-  const nextSlide = () => setSlideIndex((prev) => Math.min(prev + 1, maxSlide));
-  const prevSlide = () => setSlideIndex((prev) => Math.max(prev - 1, 0));
+  // Responsive carousel: scroll by exactly one card width, snap-aligned per breakpoint.
+  // (The old transform math always stepped 33.33% of the container, misaligning
+  // cards at sm/base breakpoints where cards are 50%/100% wide.)
+  const scrollTrack = (dir: 1 | -1) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const card = track.querySelector<HTMLElement>('[data-node-card]');
+    const amount = card ? card.offsetWidth + 24 : track.clientWidth;
+    track.scrollBy({ left: dir * amount, behavior: 'smooth' });
+  };
 
   return (
     <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-20 md:pb-6">
@@ -163,22 +168,17 @@ export default function DashboardExecutivePage() {
             <div className="flex items-center gap-1.5 bg-surface-lowest border border-outline-variant rounded-xl p-1 shadow-xs">
               <button
                 type="button"
-                onClick={prevSlide}
-                disabled={slideIndex === 0}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-primary hover:bg-surface-low disabled:opacity-30 disabled:hover:bg-transparent transition-all"
-                title="Previous Banks"
+                onClick={() => scrollTrack(-1)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-primary hover:bg-surface-low transition-all"
+                aria-label="Previous banks"
               >
                 <span className="material-symbols-outlined text-[18px]">chevron_left</span>
               </button>
-              <span className="text-xs font-mono text-on-surface-variant px-1 font-semibold">
-                {slideIndex + 1}–{Math.min(slideIndex + 3, nodes.length)} / {nodes.length}
-              </span>
               <button
                 type="button"
-                onClick={nextSlide}
-                disabled={slideIndex >= maxSlide}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-primary hover:bg-surface-low disabled:opacity-30 disabled:hover:bg-transparent transition-all"
-                title="Next Banks"
+                onClick={() => scrollTrack(1)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-primary hover:bg-surface-low transition-all"
+                aria-label="Next banks"
               >
                 <span className="material-symbols-outlined text-[18px]">chevron_right</span>
               </button>
@@ -191,67 +191,65 @@ export default function DashboardExecutivePage() {
           </div>
         </div>
 
-        {/* Carousel / Sliding Cards Container */}
-        <div className="relative overflow-hidden">
-          <motion.div
-            animate={{ x: `-${slideIndex * (100 / 3)}%` }}
-            transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-            className="flex gap-4 sm:gap-6"
-          >
-            {nodes.map((node) => (
-              <div
-                key={node.id}
-                className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] flex-shrink-0 p-5 sm:p-6 rounded-3xl bg-surface-lowest border border-outline-variant shadow-sm hover:shadow-enclave transition-all flex flex-col justify-between space-y-4 relative"
-              >
-                {/* Bank Header with Matching Color Tag Badge */}
-                <div className="flex justify-between items-start gap-2">
-                  <div className="flex items-center gap-2.5">
-                    {/* Colored dot matching the Net Worth chart */}
-                    <div
-                      className="w-3.5 h-3.5 rounded-full flex-shrink-0 shadow-xs ring-2 ring-white"
-                      style={{ backgroundColor: node.color }}
-                      title={`Net Worth Chart Color for ${node.name}`}
-                    />
-                    <div>
-                      <h3 className="font-bold text-primary text-sm sm:text-base leading-tight">{node.name}</h3>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-on-surface-variant">{node.cat}</span>
-                        <span
-                          className="px-2 py-0.2 text-[10px] font-bold rounded-md font-mono"
-                          style={{ backgroundColor: `${node.color}15`, color: node.tagColor || node.color }}
-                        >
-                          {node.tagLabel}
-                        </span>
-                      </div>
+        {/* Carousel / Sliding Cards Container (scroll-snap: correct at every breakpoint) */}
+        <div
+          ref={trackRef}
+          className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {nodes.map((node) => (
+            <div
+              key={node.id}
+              data-node-card
+              className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] flex-shrink-0 snap-start p-5 sm:p-6 rounded-3xl bg-surface-lowest border border-outline-variant shadow-sm hover:shadow-enclave transition-all flex flex-col justify-between space-y-4 relative"
+            >
+              {/* Bank Header with Matching Color Tag Badge */}
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex items-center gap-2.5">
+                  {/* Colored dot matching the Net Worth chart */}
+                  <div
+                    className="w-3.5 h-3.5 rounded-full flex-shrink-0 shadow-xs ring-2 ring-white"
+                    style={{ backgroundColor: node.color }}
+                    title={`Net Worth Chart Color for ${node.name}`}
+                  />
+                  <div>
+                    <h3 className="font-bold text-primary text-sm sm:text-base leading-tight">{node.name}</h3>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-on-surface-variant">{node.cat}</span>
+                      <span
+                        className="px-2 py-0.2 text-[10px] font-bold rounded-md font-mono"
+                        style={{ backgroundColor: `${node.color}15`, color: node.tagColor || node.color }}
+                      >
+                        {node.tagLabel}
+                      </span>
                     </div>
                   </div>
-
-                  <span className="px-2.5 py-1 rounded-full bg-secondary/15 text-secondary border border-secondary/30 font-mono text-[10px] font-bold flex items-center gap-1 flex-shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
-                    {node.ping}ms
-                  </span>
                 </div>
 
-                <div>
-                  <div className="text-xs text-on-surface-variant font-medium">Available Balance</div>
-                  <div className="text-xl sm:text-2xl font-extrabold font-mono text-primary mt-0.5">{formatCurrency(node.bal)}</div>
-                </div>
-
-                {/* Button: Refresh MyMoney with spinning sync icon */}
-                <button
-                  type="button"
-                  onClick={() => triggerForceSync(node.id)}
-                  disabled={isSyncingNode === node.id}
-                  className="w-full py-2.5 rounded-xl bg-surface-low hover:bg-surface-high border border-outline-variant text-xs font-semibold text-primary transition-all flex justify-center items-center gap-2 shadow-xs active:scale-[0.98]"
-                >
-                  <span className={`material-symbols-outlined text-[16px] text-secondary ${isSyncingNode === node.id ? 'animate-spin' : ''}`}>
-                    sync
-                  </span>
-                  <span>{isSyncingNode === node.id ? 'Refreshing MyMoney...' : 'Refresh MyMoney'}</span>
-                </button>
+                <span className="px-2.5 py-1 rounded-full bg-secondary/15 text-secondary border border-secondary/30 font-mono text-[10px] font-bold flex items-center gap-1 flex-shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+                  {node.ping}ms
+                </span>
               </div>
-            ))}
-          </motion.div>
+
+              <div>
+                <div className="text-xs text-on-surface-variant font-medium">Available Balance</div>
+                <div className="text-xl sm:text-2xl font-extrabold font-mono text-primary mt-0.5">{formatCurrency(node.bal)}</div>
+              </div>
+
+              {/* Button: Refresh MyMoney with spinning sync icon */}
+              <button
+                type="button"
+                onClick={() => triggerForceSync(node.id)}
+                disabled={isSyncingNode === node.id}
+                className="w-full py-2.5 rounded-xl bg-surface-low hover:bg-surface-high border border-outline-variant text-xs font-semibold text-primary transition-all flex justify-center items-center gap-2 shadow-xs active:scale-[0.98]"
+              >
+                <span className={`material-symbols-outlined text-[16px] text-secondary ${isSyncingNode === node.id ? 'animate-spin' : ''}`}>
+                  sync
+                </span>
+                <span>{isSyncingNode === node.id ? 'Refreshing MyMoney...' : 'Refresh MyMoney'}</span>
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 

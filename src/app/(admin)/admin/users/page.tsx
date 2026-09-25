@@ -28,7 +28,7 @@ export default function AdminUsersPage() {
   const toggleSuspend = (userId: string) => {
     setUsers(users.map((u) => {
       if (u.id !== userId) return u;
-      return { ...u, stealthModeEnabled: !u.stealthModeEnabled };
+      return { ...u, suspended: !u.suspended };
     }));
   };
 
@@ -65,6 +65,7 @@ export default function AdminUsersPage() {
               const badge = tierBadge[user.tier];
               return (
                 <motion.tr key={user.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  style={user.suspended ? { opacity: 0.45 } : undefined}
                   className="border-b border-white/5 hover:bg-white/5 transition-colors">
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-3">
@@ -77,7 +78,7 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-3.5 text-xs font-mono text-white/60">{user.email}</td>
                   <td className="px-4 py-3.5">
                     <select value={user.tier} onChange={(e) => changeTier(user.id, e.target.value as SubscriptionTier)}
-                      className={`px-2.5 py-1 rounded-lg ${badge.bg} ${badge.text} text-[10px] font-bold uppercase bg-transparent border border-white/10 focus:outline-none cursor-pointer`}>
+                      className={`px-2.5 py-1 rounded-lg ${badge.bg} ${badge.text} text-[10px] font-bold uppercase border border-white/10 focus:outline-none cursor-pointer`}>
                       <option value="free" className="bg-primary-dark">Free</option>
                       <option value="premium" className="bg-primary-dark">Premium</option>
                       <option value="premium_plus" className="bg-primary-dark">Premium+</option>
@@ -93,8 +94,13 @@ export default function AdminUsersPage() {
                         View
                       </button>
                       <button onClick={() => toggleSuspend(user.id)}
-                        className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 text-[10px] font-bold hover:bg-amber-500/20 transition-all">
-                        Re-Index
+                        aria-pressed={user.suspended}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                          user.suspended
+                            ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                            : 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
+                        }`}>
+                        {user.suspended ? 'Restore' : 'Suspend'}
                       </button>
                     </div>
                   </td>
@@ -120,6 +126,7 @@ export default function AdminUsersPage() {
               {[
                 { label: 'Email', value: selectedUser.email },
                 { label: 'Tier', value: selectedUser.tier.replace('_', ' ').toUpperCase() },
+                { label: 'Status', value: selectedUser.suspended ? 'SUSPENDED' : 'Active' },
                 { label: 'Stealth Mode', value: selectedUser.stealthModeEnabled ? 'Enabled' : 'Disabled' },
                 { label: 'Card Freeze', value: selectedUser.globalCardFreeze ? 'Active' : 'Inactive' },
                 { label: 'Created', value: new Date(selectedUser.createdAt).toLocaleDateString() },
