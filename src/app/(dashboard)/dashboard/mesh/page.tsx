@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStealth } from '@/hooks/use-stealth';
+import { useMonoConnect } from '@/hooks/use-mono-connect';
 import { bankInstitutions } from '@/lib/mock-data/banks';
 import type { BankNode, NodeStatus, BankInstitution } from '@/types';
 
@@ -26,12 +27,41 @@ export default function MeshPage() {
   const { formatCurrency } = useStealth();
   const [nodes, setNodes] = useState<BankNode[]>(initialNodes);
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const { openMonoConnect, isLoading: isMonoConnecting } = useMonoConnect();
+  const [monoNotice, setMonoNotice] = useState<string | null>(null);
 
   // Add Bank Modal State
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedBankForDetails, setSelectedBankForDetails] = useState<BankInstitution | null>(null);
   const [bankSearch, setBankSearch] = useState('');
   const [disconnectCandidate, setDisconnectCandidate] = useState<BankNode | null>(null);
+
+  const handleConnectWithMono = () => {
+    openMonoConnect({
+      onSuccess: async (code: string) => {
+        setMonoNotice('Authorizing account with Mono Open Banking...');
+        try {
+          const res = await fetch('/api/mono/exchange-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code }),
+          });
+          const data = await res.json();
+          if (res.ok && data.node) {
+            setNodes((prev) => [data.node, ...prev]);
+            setMonoNotice(`Successfully linked ${data.node.institutionName} via Mono!`);
+            setTimeout(() => setMonoNotice(null), 5000);
+          } else {
+            setMonoNotice(data.error || 'Failed to exchange token with Mono');
+            setTimeout(() => setMonoNotice(null), 6000);
+          }
+        } catch (e) {
+          setMonoNotice('Network error linking account with Mono.');
+          setTimeout(() => setMonoNotice(null), 6000);
+        }
+      },
+    });
+  };
 
   // Account details form
   const [accountNumber, setAccountNumber] = useState('');
@@ -116,13 +146,34 @@ export default function MeshPage() {
           <h1 className="font-headline font-extrabold text-2xl sm:text-3xl text-primary tracking-tight">My Money</h1>
           <p className="text-sm text-on-surface-variant">View all your linked bank accounts, cards, and live balances in one place.</p>
         </div>
-        <button
-          onClick={() => { setBankSearch(''); setSelectedBankForDetails(null); setShowAddModal(true); }}
-          className="px-5 py-2.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-container transition-all shadow-md flex items-center gap-2 self-start"
-        >
-          <span className="material-symbols-outlined text-[18px]">add_circle</span> Add Bank (33 Available)
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 self-start">
+          <button
+            type="button"
+            onClick={handleConnectWithMono}
+            disabled={isMonoConnecting}
+            className="px-5 py-2.5 rounded-xl bg-secondary text-white font-semibold text-sm hover:opacity-95 transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-60"
+            title="Connect your Nigerian bank with Mono Open Banking"
+          >
+            <span className="material-symbols-outlined text-[18px]">account_balance</span>
+            <span>{isMonoConnecting ? 'Connecting Mono...' : 'Connect via Mono (Direct)'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setBankSearch(''); setSelectedBankForDetails(null); setShowAddModal(true); }}
+            className="px-4 py-2.5 rounded-xl bg-surface-low border border-outline-variant text-primary font-semibold text-sm hover:bg-surface-high transition-all flex items-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-[18px]">add_circle</span> Manual Node
+          </button>
+        </div>
       </div>
+
+      {monoNotice && (
+        <div className="p-3.5 rounded-2xl bg-secondary/15 border border-secondary/30 flex items-center gap-3 text-xs font-semibold text-secondary shadow-sm">
+          <span className="material-symbols-outlined text-[20px]">sync_alt</span>
+          <span>{monoNotice}</span>
+        </div>
+      )}
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

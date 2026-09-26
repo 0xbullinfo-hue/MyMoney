@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String         @id @default(cuid())
+  email              String         @unique
+  passwordHash       String?
+  name               String
+  phone              String?
+  tier               String         @default("free") // "free" | "premium" | "premium_plus"
+  isAdmin            Boolean        @default(false)
+  suspended          Boolean        @default(false)
+  stealthModeEnabled Boolean        @default(false)
+  globalCardFreeze   Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  bankNodes          BankNode[]
+  transactions       Transaction[]
+  subscriptions      Subscription[]
+  cards              UserCard[]
+  bills              BillRoute[]
+  paydayRule         PaydayRule?
+
+  @@map("users")
+}
+
+model BankNode {
+  id                  String        @id @default(cuid())
+  userId              String
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institutionId       String
+  institutionName     String
+  category            String        @default("Commercial")
+  accountNumberMasked String
+  balance             Float         @default(0)
+  currency            String        @default("NGN")
+  status              String        @default("active") // "active" | "syncing" | "degraded" | "disconnected"
+  latencyMs           Int           @default(120)
+  monthlyFee          Float         @default(0)
+  monoAccountId       String?       @unique
+  encryptedAuthToken  String?       @db.Text
+  lastSyncedAt        DateTime      @default(now())
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  transactions        Transaction[]
+
+  @@map("bank_nodes")
+}
+
+model Transaction {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nodeId            String?
+  bankNode          BankNode? @relation(fields: [nodeId], references: [id], onDelete: SetNull)
+  institutionName   String
+  amount            Float
+  type              String    // "debit" | "credit"
+  category          String    // "Operations" | "Growth" | "Subscriptions" | "Lifestyle" | "Transfers"
+  description       String
+  merchantName      String
+  timestamp         DateTime  @default(now())
+  isSubscription    Boolean   @default(false)
+  isFlaggedZombie   Boolean   @default(false)
+  riskScore         Int       @default(0)
+  monoTransactionId String?   @unique
+  createdAt         DateTime  @default(now())
+
+  @@index([userId, timestamp])
+  @@map("transactions")
+}
+
+model Subscription {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nodeId         String?
+  merchantName   String
+  amount         Float
+  billingCycle   String    @default("monthly") // "monthly" | "annual"
+  lastBilledDate DateTime?
+  nextBillingDate DateTime?
+  daysInactive   Int       @default(0)
+  status         String    @default("active") // "active" | "flagged_zombie" | "blocked"
+  category       String    @default("Subscriptions")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("subscriptions")
+}
+
+model UserCard {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankName          String
+  cardType          String   // "Visa" | "Mastercard" | "Verve"
+  last4             String
+  expiry            String
+  hardwareToken     String?
+  monthlySpendLimit Float    @default(200000)
+  status            String   @default("active") // "active" | "frozen"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("user_cards")
+}
+
+model BillRoute {
+  id                       String   @id @default(cuid())
+  userId                   String
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                     String
+  category                 String   // "utilities" | "telecom_data" | "subscriptions" | "housing_rent" | "education" | ...
+  categoryLabel            String
+  icon                     String   @default("receipt")
+  targetAmount             Float
+  maxSpendingCap           Float
+  billerIdentifier         String   // Meter number, smartcard, phone number
+  assignedPaymentSourceId  String?
+  assignedPaymentSourceName String
+  selectedPlanId           String?
+  isAutoEnabled            Boolean  @default(true)
+  status                   String   @default("active") // "active" | "paused" | "settled"
+  lastSettledDate          String?
+  description              String
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@map("bill_routes")
+}
+
+model PaydayRule {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  minInflowThreshold     Float    @default(250000)
+  narrationKeywords      String   @default("SALARY,DIVIDEND,CONSULTING")
+  executionMode          String   @default("autonomous") // "autonomous" | "manual_approval"
+  primaryReceivingNodeId String?
+  residualStrategy       String   @default("sweep_to_savings")
+  globalFreezeActive     Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@map("payday_rules")
+}
+
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  provider  String   @default("mono") // "mono" | "openbanking"
+  eventType String
+  status    String   @default("processed") // "processed" | "duplicate_ignored" | "failed"
+  payload   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("webhook_events")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  details   String?  @db.Text
+  userId    String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
