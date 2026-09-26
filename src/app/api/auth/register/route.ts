@@ -14,9 +14,14 @@ export async function POST(req: NextRequest) {
 
   const email = body.email?.trim().toLowerCase();
   const name = body.name?.trim();
-  const password = body.password || process.env.DEMO_PASSWORD || 'MyMoney2026!';
+  // Accept an explicit password, or the DEMO_PASSWORD env var for development.
+  // No hardcoded string fallback — registration fails if neither is supplied.
+  const password = body.password || process.env.DEMO_PASSWORD;
   if (!email || !name) {
     return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
+  }
+  if (!password) {
+    return NextResponse.json({ error: 'Password is required' }, { status: 400 });
   }
 
   const tier: SubscriptionTier = body.tier ?? 'free';

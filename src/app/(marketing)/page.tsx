@@ -131,8 +131,9 @@ export default function MarketingLandingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: fullName || 'New User',
-          email: formEmail || 'user@mymoney.ng',
+          email: formEmail,
           phone: formPhone,
+          password: formPassword,
           tier: selectedTier,
         }),
       });

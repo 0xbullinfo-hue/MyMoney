@@ -21,7 +21,7 @@ export default function AdminAuditPage() {
 
   const exportCSV = () => {
     const headers = 'ID,Institution,Status,Latency,Signature,Timestamp,Result\n';
-    const rows = filteredLogs.map((l) => `${l.id},${l.institutionId},${l.statusCode},${l.latencyMs},${l.payloadSignature},${l.timestamp},${l.status}`).join('\n');
+    const rows = filteredLogs.map((l) => `${l.id},${l.institutionId},${l.statusCode},${l.latencyMs},${l.payloadSignature.slice(0, 8)}...,${l.timestamp},${l.status}`).join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -107,7 +107,7 @@ export default function AdminAuditPage() {
                     }`}>{log.statusCode}</span>
                   </td>
                   <td className={`px-4 py-3 text-xs font-mono font-bold ${log.latencyMs > 100 ? 'text-amber-400' : 'text-secondary-fixed'}`}>{log.latencyMs}ms</td>
-                  <td className="px-4 py-3 text-xs font-mono text-white/30">{log.payloadSignature}</td>
+                  <td className="px-4 py-3 text-xs font-mono text-white/30">{log.payloadSignature.slice(0, 8)}...</td>
                   <td className="px-4 py-3 text-xs font-mono text-white/40">{formatRelativeTime(log.timestamp)}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-mono font-bold ${
