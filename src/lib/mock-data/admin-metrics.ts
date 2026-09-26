@@ -1,11 +1,11 @@
 import type { User, WebhookLog, EnvelopeBudget, DebtItem, AdminEndpoint } from '@/types';
 
 export const mockUsers: User[] = [
-  { id: 'user-1', email: 'adekunle@mymoney.ng', name: 'Adekunle Okonkwo', tier: 'premium', suspended: false, stealthModeEnabled: false, globalCardFreeze: false, createdAt: '2026-01-15T09:00:00Z' },
-  { id: 'user-2', email: 'chioma@gmail.com', name: 'Chioma Adebayo', tier: 'free', suspended: true, stealthModeEnabled: true, globalCardFreeze: false, createdAt: '2026-04-22T14:30:00Z' },
-  { id: 'user-3', email: 'emeka.corp@company.ng', name: 'Emeka Nwosu', tier: 'premium_plus', suspended: false, stealthModeEnabled: false, globalCardFreeze: false, createdAt: '2025-11-01T08:00:00Z' },
-  { id: 'user-4', email: 'fatima@mymoney.ng', name: 'Fatima Abdullahi', tier: 'premium', suspended: false, stealthModeEnabled: false, globalCardFreeze: true, createdAt: '2026-06-10T11:15:00Z' },
-  { id: 'user-5', email: 'bola.test@outlook.com', name: 'Bola Ogundimu', tier: 'free', suspended: false, stealthModeEnabled: false, globalCardFreeze: false, createdAt: '2026-08-03T16:45:00Z' },
+  { id: 'demo-user-1', email: 'demo.admin@example.com', name: 'Demo Admin', tier: 'premium', suspended: false, stealthModeEnabled: false, globalCardFreeze: false, createdAt: '2026-01-15T09:00:00Z' },
+  { id: 'demo-user-2', email: 'demo.user2@example.com', name: 'Demo User Two', tier: 'free', suspended: true, stealthModeEnabled: true, globalCardFreeze: false, createdAt: '2026-04-22T14:30:00Z' },
+  { id: 'demo-user-3', email: 'demo.corp@example.com', name: 'Demo Corp User', tier: 'premium_plus', suspended: false, stealthModeEnabled: false, globalCardFreeze: false, createdAt: '2025-11-01T08:00:00Z' },
+  { id: 'demo-user-4', email: 'demo.user4@example.com', name: 'Demo User Four', tier: 'premium', suspended: false, stealthModeEnabled: false, globalCardFreeze: true, createdAt: '2026-06-10T11:15:00Z' },
+  { id: 'demo-user-5', email: 'demo.user5@example.com', name: 'Demo User Five', tier: 'free', suspended: false, stealthModeEnabled: false, globalCardFreeze: false, createdAt: '2026-08-03T16:45:00Z' },
 ];
 
 export const mockWebhookLogs: WebhookLog[] = [

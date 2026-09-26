@@ -29,15 +29,20 @@ export function middleware(req: NextRequest) {
 
   if (isAdminRoute) {
     if (!session || !session.isAdmin) {
-      return pathname.startsWith('/api/admin')
-        ? NextResponse.json({ error: 'Forbidden' }, { status: session ? 403 : 401 })
-        : NextResponse.redirect(new URL('/', req.url));
+      if (pathname.startsWith('/api/admin')) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: session ? 403 : 401 });
+      }
+      const dest = new URL('/', req.url);
+      dest.searchParams.set('admin_auth_required', '1');
+      return NextResponse.redirect(dest);
     }
     return NextResponse.next();
   }
 
   if (isDashboardPage && !session) {
-    return NextResponse.redirect(new URL('/', req.url));
+    const dest = new URL('/', req.url);
+    dest.searchParams.set('auth_required', '1');
+    return NextResponse.redirect(dest);
   }
 
   // Every other /api/* route (transactions, subscriptions, node sync, ...) is app data

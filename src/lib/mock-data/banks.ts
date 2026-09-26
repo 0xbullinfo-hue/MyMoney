@@ -46,7 +46,7 @@ export const bankInstitutions: BankInstitution[] = [
 
 export const defaultNodes = bankInstitutions.slice(0, 4).map((bank, i) => ({
   id: `node-${i + 1}`,
-  userId: 'user-1',
+  userId: 'current-user', // placeholder — real userId comes from the session on the server
   institutionId: bank.id,
   institutionName: bank.name,
   category: bank.category,

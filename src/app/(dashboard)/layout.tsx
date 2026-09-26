@@ -170,10 +170,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             <Link
               href="/dashboard/profile"
-              className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold hover:ring-2 hover:ring-secondary transition-all flex-shrink-0"
+              className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white hover:ring-2 hover:ring-secondary transition-all flex-shrink-0"
               title="View Profile"
             >
-              AO
+              <span className="material-symbols-outlined text-[18px]">person</span>
             </Link>
           </div>
         </header>

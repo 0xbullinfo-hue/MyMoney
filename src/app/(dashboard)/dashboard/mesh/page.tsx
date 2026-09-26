@@ -16,11 +16,11 @@ const statusColors: Record<NodeStatus, { bg: string; text: string; label: string
 };
 
 const initialNodes: BankNode[] = [
-  { id: 'n1', userId: 'u1', institutionId: 'gtb', institutionName: 'GTBank PLC', category: 'Commercial', accountNumberMasked: '****0491', balance: 14250000, currency: 'NGN', status: 'active', latencyMs: 12, lastWebhookSync: new Date().toISOString(), monthlyFee: 0 },
-  { id: 'n2', userId: 'u1', institutionId: 'stanbic', institutionName: 'Stanbic IBTC', category: 'Investment', accountNumberMasked: '****5678', balance: 8400000, currency: 'NGN', status: 'active', latencyMs: 14, lastWebhookSync: new Date(Date.now() - 120000).toISOString(), monthlyFee: 0 },
-  { id: 'n3', userId: 'u1', institutionId: 'kuda', institutionName: 'Kuda Bank MFB', category: 'Digital MFB', accountNumberMasked: '****9012', balance: 2200000, currency: 'NGN', status: 'active', latencyMs: 8, lastWebhookSync: new Date(Date.now() - 60000).toISOString(), monthlyFee: 0 },
-  { id: 'n4', userId: 'u1', institutionId: 'zenith', institutionName: 'Zenith Bank PLC', category: 'Commercial', accountNumberMasked: '****3456', balance: 5600000, currency: 'NGN', status: 'active', latencyMs: 24, lastWebhookSync: new Date(Date.now() - 900000).toISOString(), monthlyFee: 0 },
-  { id: 'n5', userId: 'u1', institutionId: 'access', institutionName: 'Access Bank PLC', category: 'Commercial', accountNumberMasked: '****7890', balance: 1150000, currency: 'NGN', status: 'active', latencyMs: 19, lastWebhookSync: new Date(Date.now() - 300000).toISOString(), monthlyFee: 0 },
+  { id: 'n1', institutionId: 'gtb', institutionName: 'GTBank PLC', category: 'Commercial', accountNumberMasked: '****0491', balance: 14250000, currency: 'NGN', status: 'active', latencyMs: 12, lastWebhookSync: new Date().toISOString(), monthlyFee: 0 },
+  { id: 'n2', institutionId: 'stanbic', institutionName: 'Stanbic IBTC', category: 'Investment', accountNumberMasked: '****5678', balance: 8400000, currency: 'NGN', status: 'active', latencyMs: 14, lastWebhookSync: new Date(Date.now() - 120000).toISOString(), monthlyFee: 0 },
+  { id: 'n3', institutionId: 'kuda', institutionName: 'Kuda Bank MFB', category: 'Digital MFB', accountNumberMasked: '****9012', balance: 2200000, currency: 'NGN', status: 'active', latencyMs: 8, lastWebhookSync: new Date(Date.now() - 60000).toISOString(), monthlyFee: 0 },
+  { id: 'n4', institutionId: 'zenith', institutionName: 'Zenith Bank PLC', category: 'Commercial', accountNumberMasked: '****3456', balance: 5600000, currency: 'NGN', status: 'active', latencyMs: 24, lastWebhookSync: new Date(Date.now() - 900000).toISOString(), monthlyFee: 0 },
+  { id: 'n5', institutionId: 'access', institutionName: 'Access Bank PLC', category: 'Commercial', accountNumberMasked: '****7890', balance: 1150000, currency: 'NGN', status: 'active', latencyMs: 19, lastWebhookSync: new Date(Date.now() - 300000).toISOString(), monthlyFee: 0 },
 ];
 
 export default function MeshPage() {
@@ -118,7 +118,6 @@ export default function MeshPage() {
     setTimeout(() => {
       const newNode: BankNode = {
         id: `n${Date.now()}`,
-        userId: 'u1',
         institutionId: selectedBankForDetails.id,
         institutionName: selectedBankForDetails.name,
         category: selectedBankForDetails.category,

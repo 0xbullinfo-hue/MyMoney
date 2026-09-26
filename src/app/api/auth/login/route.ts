@@ -4,7 +4,10 @@ import { mockUsers } from '@/lib/mock-data/admin-metrics';
 import { prisma, isDatabaseConfigured } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? 'adekunle@mymoney.ng')
+// Emails that are granted isAdmin=true in the session token.
+// Must be set via ADMIN_EMAILS env var (comma-separated). No hardcoded fallback
+// — if the env var is missing, no email is granted admin access.
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? '')
   .split(',')
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);

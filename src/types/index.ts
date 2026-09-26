@@ -25,7 +25,8 @@ export interface User {
 
 export interface BankNode {
   id: string;
-  userId: string;
+  /** Server-side only \u2014 omit in client-constructed objects so it never reaches the browser DOM */
+  userId?: string;
   institutionId: string;
   institutionName: string;
   category: BankCategory;
