@@ -50,7 +50,6 @@ export const defaultNodes = bankInstitutions.slice(0, 4).map((bank, i) => ({
   institutionId: bank.id,
   institutionName: bank.name,
   category: bank.category,
-  accountNumberMasked: `****${(1234 + i * 111).toString()}`,
   balance: bank.defaultBalance,
   currency: 'NGN' as const,
   status: 'active' as const,

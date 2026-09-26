@@ -44,11 +44,7 @@ export async function POST(req: NextRequest) {
       category = 'Investment & Commercial';
     }
 
-    const maskedNumber = account.accountNumber
-      ? `•••• ${account.accountNumber.slice(-4)}`
-      : '•••• 0000';
-
-    // 4. Save to Database if configured
+    // 4. Save to Database if configured (Zero Financial Credential Storage: no account numbers or tokens stored)
     let savedNode = null;
     if (isDatabaseConfigured()) {
       savedNode = await prisma.bankNode.upsert({
@@ -57,21 +53,18 @@ export async function POST(req: NextRequest) {
           balance: account.balance,
           status: 'active',
           lastSyncedAt: new Date(),
-          encryptedAuthToken: encryptedTokenStr,
         },
         create: {
           userId: session.userId,
           institutionId: account.institution.bankCode || `mono_${monoAccountId.slice(0, 6)}`,
           institutionName: account.institution.name,
           category,
-          accountNumberMasked: maskedNumber,
           balance: account.balance,
           currency: account.currency === 'USD' ? 'USD' : 'NGN',
           status: 'active',
           latencyMs: 45,
           monthlyFee: 50,
           monoAccountId,
-          encryptedAuthToken: encryptedTokenStr,
         },
       });
     }
@@ -83,7 +76,6 @@ export async function POST(req: NextRequest) {
         userId: session.userId,
         institutionName: account.institution.name,
         category,
-        accountNumberMasked: maskedNumber,
         balance: account.balance,
         currency: account.currency,
         status: 'active',

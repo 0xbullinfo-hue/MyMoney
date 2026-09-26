@@ -36,12 +36,12 @@ export default function PaydayHubPage() {
   const [selectedCatalogId, setSelectedCatalogId] = useState<string>('cat_netflix');
   const [selectedPlanId, setSelectedPlanId] = useState<string>('net_premium');
   const [customBillerId, setCustomBillerId] = useState('');
-  const [customCardId, setCustomCardId] = useState('card_01');
+  const [customCardId, setCustomCardId] = useState('mandate_01');
 
-  // Card Management Modal & Prompts
+  // Mandate Management Modal & Prompts (Zero Card Data Architecture)
   const [showCardModal, setShowCardModal] = useState(false);
   const [isAddingCard, setIsAddingCard] = useState(false);
-  const [newCardForm, setNewCardForm] = useState({ bankName: 'GTBank', cardType: 'Mastercard' as const, last4: '9920', expiry: '12/28', limit: 200000 });
+  const [newCardForm, setNewCardForm] = useState({ bankName: 'GTBank', category: 'Commercial', limit: 250000 });
   const [cardDisconnectTarget, setCardDisconnectTarget] = useState<UserCardItem | null>(null);
   const [showDisconnectAllConfirm, setShowDisconnectAllConfirm] = useState(false);
 
@@ -193,8 +193,8 @@ export default function PaydayHubPage() {
                 targetAmount: plan.amount,
                 maxSpendingCap: Math.round(plan.amount * 1.2),
                 billerIdentifier: customBillerId || 'Registered Account',
-                assignedPaymentSourceId: card ? card.id : 'card_01',
-                assignedPaymentSourceName: card ? `${card.bankName} (•••• ${card.last4})` : 'GTBank (•••• 0491)',
+                assignedPaymentSourceId: card ? card.id : 'mandate_01',
+                assignedPaymentSourceName: card ? `${card.bankName} Mandate` : 'GTBank Mandate',
                 selectedPlanId: plan.id,
                 description: plan.description,
               }
@@ -212,8 +212,8 @@ export default function PaydayHubPage() {
         targetAmount: plan.amount,
         maxSpendingCap: Math.round(plan.amount * 1.2),
         billerIdentifier: customBillerId || 'Registered Account',
-        assignedPaymentSourceId: card ? card.id : 'card_01',
-        assignedPaymentSourceName: card ? `${card.bankName} (•••• ${card.last4})` : 'GTBank (•••• 0491)',
+        assignedPaymentSourceId: card ? card.id : 'mandate_01',
+        assignedPaymentSourceName: card ? `${card.bankName} Mandate` : 'GTBank Mandate',
         selectedPlanId: plan.id,
         isAutoEnabled: true,
         status: 'active',
@@ -286,20 +286,20 @@ export default function PaydayHubPage() {
           type="button"
           onClick={() => setShowCardModal(true)}
           className="p-4 rounded-2xl bg-surface-lowest border border-outline-variant hover:border-primary/40 hover:bg-surface-high transition-all text-left shadow-sm flex items-center justify-between group"
-          title="Manage Authorized Cards"
+          title="Manage Authorized Mandates"
         >
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-secondary/10 border border-secondary/20 flex items-center justify-center text-secondary group-hover:scale-105 transition-transform">
-              <span className="material-symbols-outlined text-[24px]">credit_card</span>
+              <span className="material-symbols-outlined text-[24px]">assignment_turned_in</span>
             </div>
             <div>
               <div className="text-xs font-bold text-primary flex items-center gap-1.5">
-                <span>Manage Cards</span>
+                <span>Manage Mandates</span>
                 <span className="px-1.5 py-0.5 rounded-full bg-secondary/15 text-secondary text-[10px] font-mono font-bold">
                   {cards.length} Active
                 </span>
               </div>
-              <div className="text-[11px] text-on-surface-variant mt-0.5">Link or disconnect payment cards</div>
+              <div className="text-[11px] text-on-surface-variant mt-0.5">Open Banking direct debit mandates</div>
             </div>
           </div>
           <span className="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary transition-colors">chevron_right</span>
@@ -458,7 +458,7 @@ export default function PaydayHubPage() {
               </div>
 
               <div className="flex items-center gap-1.5 text-on-surface-variant font-medium">
-                <span className="material-symbols-outlined text-[14px] text-secondary">credit_card</span>
+                <span className="material-symbols-outlined text-[14px] text-secondary">account_balance_wallet</span>
                 <span>{bill.assignedPaymentSourceName}</span>
               </div>
             </div>
@@ -477,7 +477,7 @@ export default function PaydayHubPage() {
                 }}
                 className="text-primary font-semibold hover:underline"
               >
-                Change Plan / Card
+                Change Plan / Mandate
               </button>
             </div>
           </div>
@@ -504,7 +504,7 @@ export default function PaydayHubPage() {
                   <span>Payday Pre-Payment Verification</span>
                 </div>
                 <h3 className="font-headline font-bold text-xl text-primary">Approve All Payday Bills</h3>
-                <p className="text-xs text-on-surface-variant">Review every bill and assigned card before confirming payments.</p>
+                <p className="text-xs text-on-surface-variant">Review every bill and assigned mandate before confirming payments.</p>
               </div>
 
               {/* Itemized List */}
@@ -810,35 +810,35 @@ export default function PaydayHubPage() {
               </button>
 
               <div className="space-y-1">
-                <span className="text-xs font-mono font-bold uppercase text-secondary">Tokenized Card Vault</span>
-                <h3 className="font-headline font-bold text-xl text-primary">Authorized Payment Cards</h3>
-                <p className="text-xs text-on-surface-variant">Cards are tokenized securely with your bank. You can disconnect anytime.</p>
+                <span className="text-xs font-mono font-bold uppercase text-secondary">Zero-Storage Mandate Vault</span>
+                <h3 className="font-headline font-bold text-xl text-primary">Authorized Direct Debit Mandates</h3>
+                <p className="text-xs text-on-surface-variant">Payments are settled directly from your bank via CBN Open Banking mandates with zero card storage.</p>
               </div>
 
-              {/* Cards List */}
+              {/* Mandates List */}
               <div className="space-y-3">
                 {cards.length === 0 ? (
                   <div className="p-8 text-center bg-surface-low rounded-2xl border border-outline-variant text-xs text-on-surface-variant">
-                    No active cards. Add a card below to assign to bills.
+                    No active mandates. Authorize a direct debit mandate below to assign to bills.
                   </div>
                 ) : (
-                  cards.map((card) => (
-                    <div key={card.id} className="p-4 rounded-2xl bg-surface-low border border-outline-variant flex items-center justify-between">
+                  cards.map((mandate) => (
+                    <div key={mandate.id} className="p-4 rounded-2xl bg-surface-low border border-outline-variant flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-xs">
-                          {card.cardType.slice(0, 4)}
+                        <div className="w-10 h-10 rounded-xl bg-secondary/15 text-secondary flex items-center justify-center font-bold text-xs font-mono">
+                          MND
                         </div>
                         <div>
-                          <div className="font-bold text-sm text-primary">{card.bankName} {card.cardType} (•••• {card.last4})</div>
-                          <div className="text-[11px] text-on-surface-variant">Expires: {card.expiry} • Limit: {formatCurrency(card.monthlySpendLimit)}/mo</div>
+                          <div className="font-bold text-sm text-primary">{mandate.bankName} Direct Debit ({mandate.mandateRef})</div>
+                          <div className="text-[11px] text-on-surface-variant">{mandate.institutionCategory} • Ceiling: {formatCurrency(mandate.monthlySpendLimit)}/mo</div>
                         </div>
                       </div>
                       <button
-                        onClick={() => setCardDisconnectTarget(card)}
+                        onClick={() => setCardDisconnectTarget(mandate)}
                         className="p-2 rounded-xl text-accent hover:bg-accent/10 border border-accent/30 text-xs font-semibold"
-                        title="Disconnect Card"
+                        title="Revoke Mandate"
                       >
-                        Disconnect
+                        Revoke
                       </button>
                     </div>
                   ))
@@ -851,15 +851,15 @@ export default function PaydayHubPage() {
                   onClick={() => setIsAddingCard(true)}
                   className="w-1/2 py-2.5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all flex items-center justify-center gap-1.5"
                 >
-                  <span className="material-symbols-outlined text-[16px]">add_card</span>
-                  <span>Add New Card</span>
+                  <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                  <span>Authorize Mandate</span>
                 </button>
                 <button
                   onClick={() => setShowDisconnectAllConfirm(true)}
                   disabled={cards.length === 0}
                   className="w-1/2 py-2.5 rounded-xl border border-accent/40 text-accent font-bold text-xs hover:bg-accent/10 transition-all disabled:opacity-40"
                 >
-                  Disconnect All Cards
+                  Revoke All Mandates
                 </button>
               </div>
             </motion.div>
@@ -867,17 +867,17 @@ export default function PaydayHubPage() {
         )}
       </AnimatePresence>
 
-      {/* ═══ PROMPT: DISCONNECT SINGLE CARD CONFIRMATION ═══ */}
+      {/* ═══ PROMPT: REVOKE SINGLE MANDATE CONFIRMATION ═══ */}
       {cardDisconnectTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/80 backdrop-blur-md">
           <div className="bg-surface-lowest border border-outline-variant w-full max-w-md rounded-3xl shadow-2xl p-6 sm:p-7 space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-accent/15 text-accent flex items-center justify-center">
-              <span className="material-symbols-outlined text-[28px]">credit_card_off</span>
+              <span className="material-symbols-outlined text-[28px]">gavel</span>
             </div>
             <div className="space-y-1">
-              <h3 className="font-headline font-bold text-lg text-primary">Disconnect Card •••• {cardDisconnectTarget.last4}?</h3>
+              <h3 className="font-headline font-bold text-lg text-primary">Revoke Mandate ({cardDisconnectTarget.mandateRef})?</h3>
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                Are you sure you want to disconnect this card? Any recurring bills assigned to this card will be paused until you link another card.
+                Are you sure you want to revoke this direct debit mandate for {cardDisconnectTarget.bankName}? Recurring bills mapped to this source will pause until assigned another mandate.
               </p>
             </div>
             <div className="flex gap-3 pt-2">
@@ -891,14 +891,14 @@ export default function PaydayHubPage() {
                 onClick={confirmDisconnectCard}
                 className="w-1/2 py-2.5 rounded-xl bg-accent text-white font-bold text-xs hover:bg-accent/90 transition-all"
               >
-                Yes, Disconnect
+                Yes, Revoke Mandate
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ═══ PROMPT: DISCONNECT ALL CARDS CONFIRMATION ═══ */}
+      {/* ═══ PROMPT: REVOKE ALL MANDATES CONFIRMATION ═══ */}
       {showDisconnectAllConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/80 backdrop-blur-md">
           <div className="bg-surface-lowest border border-outline-variant w-full max-w-md rounded-3xl shadow-2xl p-6 sm:p-7 space-y-4">
@@ -906,9 +906,9 @@ export default function PaydayHubPage() {
               <span className="material-symbols-outlined text-[28px]">warning</span>
             </div>
             <div className="space-y-1">
-              <h3 className="font-headline font-bold text-lg text-primary">Disconnect All Payment Cards?</h3>
+              <h3 className="font-headline font-bold text-lg text-primary">Revoke All Direct Debit Mandates?</h3>
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                This will unbind all {cards.length} cards from MyMoney and pause all active Payday bill automations.
+                This will unbind all {cards.length} mandates and immediately pause all autonomous Payday bill settlements.
               </p>
             </div>
             <div className="flex gap-3 pt-2">
@@ -916,30 +916,48 @@ export default function PaydayHubPage() {
                 onClick={() => setShowDisconnectAllConfirm(false)}
                 className="w-1/2 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-on-surface font-semibold text-xs"
               >
-                No, Keep Cards
+                No, Keep Mandates
               </button>
               <button
                 onClick={confirmDisconnectAllCards}
                 className="w-1/2 py-2.5 rounded-xl bg-accent text-white font-bold text-xs hover:bg-accent/90 transition-all"
               >
-                Yes, Disconnect All
+                Yes, Revoke All
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ═══ MODAL: ADD CARD FORM ═══ */}
+      {/* ═══ MODAL: AUTHORIZE DIRECT DEBIT MANDATE ═══ */}
       {isAddingCard && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/80 backdrop-blur-md">
           <div className="bg-surface-lowest border border-outline-variant w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-4">
-            <h3 className="font-headline font-bold text-lg text-primary">Link New Payment Card</h3>
+            <h3 className="font-headline font-bold text-lg text-primary">Authorize Direct Debit Mandate</h3>
+
+            {/* Zero Card Storage Security Banner */}
+            <div className="p-3.5 rounded-2xl bg-secondary/10 border border-secondary/20 space-y-1.5 text-xs">
+              <div className="font-bold text-primary flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-secondary text-[16px]">security</span>
+                <span>Zero Card / Account Data Stored</span>
+              </div>
+              <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                MyMoney never collects or stores debit card numbers, CVVs, expiry dates, or bank account numbers. Payments settle autonomously via CBN Open Banking tokenized direct debit mandates.
+              </p>
+            </div>
+
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-on-surface-variant mb-1 font-semibold">Issuing Bank</label>
+                <label className="block text-on-surface-variant mb-1 font-semibold">Issuing Financial Institution</label>
                 <select
                   value={newCardForm.bankName}
-                  onChange={(e) => setNewCardForm({ ...newCardForm, bankName: e.target.value })}
+                  onChange={(e) => {
+                    const inst = e.target.value;
+                    let cat = 'Commercial';
+                    if (inst.includes('Kuda')) cat = 'Digital MFB';
+                    if (inst.includes('Stanbic')) cat = 'Investment';
+                    setNewCardForm({ ...newCardForm, bankName: inst, category: cat });
+                  }}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary focus:outline-none"
                 >
                   <option value="GTBank">Guaranty Trust Bank (GTBank)</option>
@@ -952,29 +970,6 @@ export default function PaydayHubPage() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-on-surface-variant mb-1 font-semibold">Card Last 4 Digits</label>
-                  <input
-                    type="text"
-                    maxLength={4}
-                    value={newCardForm.last4}
-                    onChange={(e) => setNewCardForm({ ...newCardForm, last4: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-on-surface-variant mb-1 font-semibold">Expiry Date</label>
-                  <input
-                    type="text"
-                    placeholder="MM/YY"
-                    value={newCardForm.expiry}
-                    onChange={(e) => setNewCardForm({ ...newCardForm, expiry: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary font-mono"
-                  />
-                </div>
-              </div>
-
               <div>
                 <label className="block text-on-surface-variant mb-1 font-semibold">Monthly Spending Ceiling (₦)</label>
                 <input
@@ -983,6 +978,7 @@ export default function PaydayHubPage() {
                   onChange={(e) => setNewCardForm({ ...newCardForm, limit: Number(e.target.value) })}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary font-mono"
                 />
+                <span className="text-[10px] text-on-surface-variant mt-1 block">Maximum amount this bank mandate can execute per month.</span>
               </div>
             </div>
 
@@ -995,22 +991,20 @@ export default function PaydayHubPage() {
               </button>
               <button
                 onClick={() => {
-                  const card: UserCardItem = {
-                    id: `card_${Date.now()}`,
+                  const mandate: UserCardItem = {
+                    id: `mandate_${Date.now()}`,
                     bankName: newCardForm.bankName,
-                    cardType: newCardForm.cardType,
-                    last4: newCardForm.last4 || '1234',
-                    expiry: newCardForm.expiry || '12/28',
-                    hardwareToken: `enc_hsm_${Math.floor(100000 + Math.random() * 900000)}`,
+                    mandateRef: `MND-${newCardForm.bankName.slice(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
+                    institutionCategory: newCardForm.category || 'Commercial',
                     monthlySpendLimit: newCardForm.limit,
                     status: 'active',
                   };
-                  setCards([...cards, card]);
+                  setCards([...cards, mandate]);
                   setIsAddingCard(false);
                 }}
                 className="w-2/3 py-2.5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-container transition-all"
               >
-                Authorize &amp; Save
+                Authorize Mandate
               </button>
             </div>
           </div>
@@ -1108,16 +1102,16 @@ export default function PaydayHubPage() {
                   );
                 })()}
 
-                {/* Step 4: Assign Card */}
+                {/* Step 4: Assign Mandate */}
                 <div>
-                  <label className="block text-on-surface-variant mb-1 font-semibold">Assign Payment Card</label>
+                  <label className="block text-on-surface-variant mb-1 font-semibold">Assign Direct Debit Mandate</label>
                   <select
                     value={customCardId}
                     onChange={(e) => setCustomCardId(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary text-sm"
                   >
                     {cards.map((c) => (
-                      <option key={c.id} value={c.id}>{c.bankName} {c.cardType} (•••• {c.last4})</option>
+                      <option key={c.id} value={c.id}>{c.bankName} Direct Debit ({c.mandateRef})</option>
                     ))}
                   </select>
                 </div>

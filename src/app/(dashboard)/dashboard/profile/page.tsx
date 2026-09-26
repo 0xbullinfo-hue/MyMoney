@@ -153,7 +153,7 @@ export default function UserProfilePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-outline-variant">
         <div>
           <h1 className="font-headline font-extrabold text-2xl sm:text-3xl text-primary tracking-tight">My Profile &amp; Preferences</h1>
-          <p className="text-sm text-on-surface-variant">View all your linked cards, active subscriptions, Payday bills, and security settings.</p>
+          <p className="text-sm text-on-surface-variant">View all your direct debit mandates, active subscriptions, Payday bills, and security settings.</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -327,38 +327,38 @@ export default function UserProfilePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* ═══ Section 2: Linked Payment Cards ═══ */}
+        {/* ═══ Section 2: Authorized Direct Debit Mandates ═══ */}
         <div className="p-6 rounded-3xl bg-surface-lowest border border-outline-variant shadow-sm space-y-4">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="font-headline font-bold text-lg text-primary">Linked Debit Cards</h3>
-              <p className="text-xs text-on-surface-variant">Authorized for Payday auto-bill settlements.</p>
+              <h3 className="font-headline font-bold text-lg text-primary">Authorized Direct Debit Mandates</h3>
+              <p className="text-xs text-on-surface-variant">Zero Card Data Stored: Auto-debits operate via CBN-regulated Open Banking mandates.</p>
             </div>
             <Link
               href="/dashboard/payday"
               className="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-container transition-all"
             >
-              + Link Card
+              + Authorize Mandate
             </Link>
           </div>
 
           <div className="space-y-3">
-            {cards.map((card) => (
-              <div key={card.id} className="p-4 rounded-2xl bg-surface-low border border-outline-variant flex items-center justify-between">
+            {cards.map((mandate) => (
+              <div key={mandate.id} className="p-4 rounded-2xl bg-surface-low border border-outline-variant flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-xs">
-                    {card.cardType.slice(0, 4)}
+                  <div className="w-10 h-10 rounded-xl bg-secondary/15 text-secondary flex items-center justify-center font-bold text-xs font-mono">
+                    MND
                   </div>
                   <div>
-                    <div className="font-bold text-sm text-primary">{card.bankName} {card.cardType} (•••• {card.last4})</div>
-                    <div className="text-xs text-on-surface-variant font-mono">Expires {card.expiry} • Cap: {formatCurrency(card.monthlySpendLimit)}/mo</div>
+                    <div className="font-bold text-sm text-primary">{mandate.bankName} Direct Debit ({mandate.mandateRef})</div>
+                    <div className="text-xs text-on-surface-variant font-mono">{mandate.institutionCategory} • Ceiling: {formatCurrency(mandate.monthlySpendLimit)}/mo</div>
                   </div>
                 </div>
                 <button
-                  onClick={() => setDisconnectingCard(card.id)}
+                  onClick={() => removeCard(mandate.id)}
                   className="px-3 py-1.5 rounded-xl border border-accent/40 text-accent text-xs font-semibold hover:bg-accent/10 transition-all"
                 >
-                  Disconnect
+                  Revoke
                 </button>
               </div>
             ))}

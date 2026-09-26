@@ -16,11 +16,11 @@ const statusColors: Record<NodeStatus, { bg: string; text: string; label: string
 };
 
 const initialNodes: BankNode[] = [
-  { id: 'n1', institutionId: 'gtb', institutionName: 'GTBank PLC', category: 'Commercial', accountNumberMasked: '****0491', balance: 14250000, currency: 'NGN', status: 'active', latencyMs: 12, lastWebhookSync: new Date().toISOString(), monthlyFee: 0 },
-  { id: 'n2', institutionId: 'stanbic', institutionName: 'Stanbic IBTC', category: 'Investment', accountNumberMasked: '****5678', balance: 8400000, currency: 'NGN', status: 'active', latencyMs: 14, lastWebhookSync: new Date(Date.now() - 120000).toISOString(), monthlyFee: 0 },
-  { id: 'n3', institutionId: 'kuda', institutionName: 'Kuda Bank MFB', category: 'Digital MFB', accountNumberMasked: '****9012', balance: 2200000, currency: 'NGN', status: 'active', latencyMs: 8, lastWebhookSync: new Date(Date.now() - 60000).toISOString(), monthlyFee: 0 },
-  { id: 'n4', institutionId: 'zenith', institutionName: 'Zenith Bank PLC', category: 'Commercial', accountNumberMasked: '****3456', balance: 5600000, currency: 'NGN', status: 'active', latencyMs: 24, lastWebhookSync: new Date(Date.now() - 900000).toISOString(), monthlyFee: 0 },
-  { id: 'n5', institutionId: 'access', institutionName: 'Access Bank PLC', category: 'Commercial', accountNumberMasked: '****7890', balance: 1150000, currency: 'NGN', status: 'active', latencyMs: 19, lastWebhookSync: new Date(Date.now() - 300000).toISOString(), monthlyFee: 0 },
+  { id: 'n1', institutionId: 'gtb', institutionName: 'GTBank PLC', category: 'Commercial', balance: 14250000, currency: 'NGN', status: 'active', latencyMs: 12, lastWebhookSync: new Date().toISOString(), monthlyFee: 0 },
+  { id: 'n2', institutionId: 'stanbic', institutionName: 'Stanbic IBTC', category: 'Investment', balance: 8400000, currency: 'NGN', status: 'active', latencyMs: 14, lastWebhookSync: new Date(Date.now() - 120000).toISOString(), monthlyFee: 0 },
+  { id: 'n3', institutionId: 'kuda', institutionName: 'Kuda Bank MFB', category: 'Digital MFB', balance: 2200000, currency: 'NGN', status: 'active', latencyMs: 8, lastWebhookSync: new Date(Date.now() - 60000).toISOString(), monthlyFee: 0 },
+  { id: 'n4', institutionId: 'zenith', institutionName: 'Zenith Bank PLC', category: 'Commercial', balance: 5600000, currency: 'NGN', status: 'active', latencyMs: 24, lastWebhookSync: new Date(Date.now() - 900000).toISOString(), monthlyFee: 0 },
+  { id: 'n5', institutionId: 'access', institutionName: 'Access Bank PLC', category: 'Commercial', balance: 1150000, currency: 'NGN', status: 'active', latencyMs: 19, lastWebhookSync: new Date(Date.now() - 300000).toISOString(), monthlyFee: 0 },
 ];
 
 export default function MeshPage() {
@@ -63,11 +63,7 @@ export default function MeshPage() {
     });
   };
 
-  // Account details form
-  const [accountNumber, setAccountNumber] = useState('');
-  const [accountName, setAccountName] = useState('Adewale Bello Okonkwo');
-  const [accountType, setAccountType] = useState('Savings Account');
-  const [bvnMasked, setBvnMasked] = useState('2223 •••• 4910');
+  // Account connection settings (Zero Financial Credential Storage Policy)
   const [syncFrequency, setSyncFrequency] = useState('Real-time Webhook (Instant)');
   const [initialDeposit, setInitialDeposit] = useState(1500000);
   const [formError, setFormError] = useState('');
@@ -97,21 +93,16 @@ export default function MeshPage() {
     return `${Math.floor(diff / 60)}h ago`;
   };
 
-  // Open Step 2: Account Details Prompt
+  // Open Step 2: Institutional Connection Authorization
   const handleSelectBank = (bank: BankInstitution) => {
     setSelectedBankForDetails(bank);
-    setAccountNumber('');
     setFormError('');
   };
 
-  // Finalize Account Submission
+  // Finalize Node Connection (Tokenized Open Banking — Zero Account Numbers Stored)
   const handleFinalizeAddAccount = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBankForDetails) return;
-    if (accountNumber.replace(/\D/g, '').length !== 10) {
-      setFormError('Please enter a valid 10-digit NUBAN account number.');
-      return;
-    }
 
     setIsVerifyingAccount(true);
 
@@ -121,7 +112,6 @@ export default function MeshPage() {
         institutionId: selectedBankForDetails.id,
         institutionName: selectedBankForDetails.name,
         category: selectedBankForDetails.category,
-        accountNumberMasked: `****${accountNumber.slice(-4)}`,
         balance: initialDeposit || selectedBankForDetails.defaultBalance,
         currency: 'NGN',
         status: 'active',
@@ -207,7 +197,10 @@ export default function MeshPage() {
                     <h3 className="font-bold text-primary text-sm sm:text-base leading-tight">{node.institutionName}</h3>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-on-surface-variant">{node.category}</span>
-                      <span className="text-xs font-mono text-on-surface-variant font-semibold">{node.accountNumberMasked}</span>
+                      <span className="text-[11px] font-mono text-secondary font-semibold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                        Open Banking Link
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -378,61 +371,22 @@ export default function MeshPage() {
                     </button>
                   </div>
 
+                  {/* Zero-Storage Open Banking Authorization Card */}
+                  <div className="p-4 rounded-2xl bg-secondary/10 border border-secondary/20 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-secondary text-[20px]">shield_lock</span>
+                      <h4 className="font-bold text-xs text-primary">Zero Financial Data Storage Guarantee</h4>
+                    </div>
+                    <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                      To prevent any possibility of financial data theft, MyMoney <strong>never collects, requests, or stores</strong> your 10-digit NUBAN account number, debit card details, BVN, or internet banking passwords.
+                    </p>
+                    <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                      This node will be linked via CBN-regulated Open Banking tokenization for encrypted, read-only balance and transaction streaming.
+                    </p>
+                  </div>
+
                   {/* Form Inputs */}
                   <div className="space-y-3 text-xs">
-                    <div>
-                      <label className="block text-primary font-semibold mb-1">Account Number (10-Digit NUBAN)</label>
-                      <input
-                        type="text"
-                        required
-                        maxLength={10}
-                        placeholder="0123456789"
-                        value={accountNumber}
-                        onChange={(e) => {
-                          setAccountNumber(e.target.value.replace(/\D/g, ''));
-                          setFormError('');
-                        }}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary font-mono text-sm focus:outline-none focus:border-primary"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-primary font-semibold mb-1">Account Holder Full Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={accountName}
-                        onChange={(e) => setAccountName(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary text-sm focus:outline-none focus:border-primary"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-primary font-semibold mb-1">Account Type</label>
-                        <select
-                          value={accountType}
-                          onChange={(e) => setAccountType(e.target.value)}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary focus:outline-none"
-                        >
-                          <option value="Savings Account">Savings Account</option>
-                          <option value="Current Account">Current Account</option>
-                          <option value="Fixed Deposit">Fixed Deposit</option>
-                          <option value="Corporate Account">Corporate Account</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-primary font-semibold mb-1">Linked BVN (Verification)</label>
-                        <input
-                          type="text"
-                          readOnly
-                          value={bvnMasked}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-high text-on-surface-variant font-mono text-xs cursor-not-allowed"
-                        />
-                      </div>
-                    </div>
-
                     <div>
                       <label className="block text-primary font-semibold mb-1">Initial Tracked Balance (₦)</label>
                       <input
@@ -442,6 +396,19 @@ export default function MeshPage() {
                         onChange={(e) => setInitialDeposit(Number(e.target.value))}
                         className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary font-mono text-sm focus:outline-none focus:border-primary"
                       />
+                    </div>
+
+                    <div>
+                      <label className="block text-primary font-semibold mb-1">Webhook Sync Frequency</label>
+                      <select
+                        value={syncFrequency}
+                        onChange={(e) => setSyncFrequency(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant bg-surface-low text-primary focus:outline-none"
+                      >
+                        <option value="Real-time Webhook (Instant)">Real-time Webhook (Instant)</option>
+                        <option value="Every 5 Minutes">Every 5 Minutes</option>
+                        <option value="Hourly Batch">Hourly Batch</option>
+                      </select>
                     </div>
 
                     {/* Architectural Permissions Consent */}

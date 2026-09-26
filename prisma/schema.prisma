@@ -27,7 +27,6 @@ model User {
   bankNodes          BankNode[]
   transactions       Transaction[]
   subscriptions      Subscription[]
-  cards              UserCard[]
   bills              BillRoute[]
   paydayRule         PaydayRule?
 
@@ -41,14 +40,12 @@ model BankNode {
   institutionId       String
   institutionName     String
   category            String        @default("Commercial")
-  accountNumberMasked String
   balance             Float         @default(0)
   currency            String        @default("NGN")
   status              String        @default("active") // "active" | "syncing" | "degraded" | "disconnected"
   latencyMs           Int           @default(120)
   monthlyFee          Float         @default(0)
   monoAccountId       String?       @unique
-  encryptedAuthToken  String?       @db.Text
   lastSyncedAt        DateTime      @default(now())
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
@@ -98,23 +95,6 @@ model Subscription {
   updatedAt      DateTime  @updatedAt
 
   @@map("subscriptions")
-}
-
-model UserCard {
-  id                String   @id @default(cuid())
-  userId            String
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bankName          String
-  cardType          String   // "Visa" | "Mastercard" | "Verve"
-  last4             String
-  expiry            String
-  hardwareToken     String?
-  monthlySpendLimit Float    @default(200000)
-  status            String   @default("active") // "active" | "frozen"
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  @@map("user_cards")
 }
 
 model BillRoute {

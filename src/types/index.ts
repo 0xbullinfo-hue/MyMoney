@@ -30,7 +30,7 @@ export interface BankNode {
   institutionId: string;
   institutionName: string;
   category: BankCategory;
-  accountNumberMasked: string;
+  // Zero Financial Credential Storage: Bank account numbers are never stored or exposed
   balance: number;
   currency: 'NGN' | 'USD';
   status: NodeStatus;

@@ -4,11 +4,9 @@ import crypto from 'crypto';
 export interface MonoAccountInfo {
   id: string;
   name: string;
-  accountNumber: string;
   type: string;
   balance: number;
   currency: string;
-  bvn?: string;
   institution: {
     name: string;
     bankCode: string;
@@ -89,11 +87,9 @@ class MonoService {
     return {
       id: account._id || accountId,
       name: account.name,
-      accountNumber: account.accountNumber,
       type: account.type,
       balance: account.balance / 100, // Mono returns kobo for NGN in certain endpoints
       currency: account.currency,
-      bvn: account.bvn,
       institution: {
         name: account.institution.name,
         bankCode: account.institution.bankCode,

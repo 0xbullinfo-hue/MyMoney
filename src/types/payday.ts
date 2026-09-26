@@ -25,16 +25,17 @@ export interface BillerCatalogItem {
   plans: BillerPlanOption[];
 }
 
-export interface UserCardItem {
+export interface DirectDebitMandateItem {
   id: string;
   bankName: string;
-  cardType: 'Visa' | 'Mastercard' | 'Verve';
-  last4: string;
-  expiry: string;
-  hardwareToken: string;
+  mandateRef: string; // Tokenized CBN Open Banking Mandate identifier (e.g. MND-GTB-8240)
+  institutionCategory: string;
   monthlySpendLimit: number;
   status: 'active' | 'frozen';
 }
+
+// UserCardItem alias for zero-storage direct debit mandates
+export type UserCardItem = DirectDebitMandateItem;
 
 export interface BillRouteItem {
   id: string;
