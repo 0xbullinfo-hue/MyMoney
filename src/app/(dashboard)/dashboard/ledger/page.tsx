@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, Suspense } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useStealth } from '@/hooks/use-stealth';
 import { mockTransactions } from '@/lib/mock-data/transactions';
@@ -18,17 +18,23 @@ const categoryMeta: Record<Transaction['category'], { color: string; bg: string;
   Transfers: { color: '#B5987A', bg: 'bg-[#B5987A]/15 border-[#B5987A]/40', text: 'text-[#8A6A4B]', icon: 'sync_alt', desc: 'Inter-bank rebalancing & family support' },
 };
 
-function LedgerContent() {
+export default function LedgerPage() {
+  return (
+    <Suspense fallback={null}>
+      <LedgerPageInner />
+    </Suspense>
+  );
+}
+
+// `useSearchParams()` requires a Suspense boundary around it in the App Router, hence the
+// wrapper above — the actual page logic is unchanged below.
+function LedgerPageInner() {
   const { formatCurrency } = useStealth();
   const searchParams = useSearchParams();
-  const queryParam = searchParams.get('q');
-  const [search, setSearch] = useState(queryParam || '');
-
-  useEffect(() => {
-    if (queryParam !== null) {
-      setSearch(queryParam);
-    }
-  }, [queryParam]);
+  // Bug fix: the dashboard header's search bar (layout.tsx) previously had no onChange
+  // handler and a no-op Search button — it was fully decorative. It now navigates here
+  // with `?q=`, which this page picks up as the initial search term.
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('');
   const [sortBy, setSortBy] = useState<'timestamp' | 'amount'>('timestamp');
@@ -408,13 +414,5 @@ function LedgerContent() {
         </div>
       )}
     </div>
-  );
-}
-
-export default function LedgerPage() {
-  return (
-    <Suspense fallback={<div className="p-8 text-center text-xs font-mono text-on-surface-variant">Loading Ledger...</div>}>
-      <LedgerContent />
-    </Suspense>
   );
 }

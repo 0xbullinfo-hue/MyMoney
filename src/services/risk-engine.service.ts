@@ -34,6 +34,37 @@ export function getSubscriptionHealth(subscriptions: SubscriptionItem[]): {
   return { active, zombie, blocked, totalMonthlyBurn: Math.round(totalMonthlyBurn), zombieBurn: Math.round(zombieBurn) };
 }
 
+const MAX_PAYOFF_MONTHS = 600; // 50-year cap, just to bound the loop
+
+interface PayoffSimulation {
+  months: number;
+  totalInterest: number;
+  /** false if the payment never exceeds the interest accruing each month — the
+   *  balance grows forever and `months`/`totalInterest` are not a real payoff. */
+  payoffAchieved: boolean;
+}
+
+function simulatePayoff(balance: number, monthlyRate: number, payment: number): PayoffSimulation {
+  // Bug fix: the original loop had no negative-amortization guard. If `payment` doesn't
+  // cover the first month's interest, `balanceWithout` grows every iteration, and the old
+  // code would silently run all 600 iterations and report "50 years to pay off" with a
+  // meaningless interest figure instead of telling the caller the debt will never clear.
+  if (payment <= balance * monthlyRate) {
+    return { months: MAX_PAYOFF_MONTHS, totalInterest: 0, payoffAchieved: false };
+  }
+
+  let bal = balance;
+  let months = 0;
+  let totalInterest = 0;
+  while (bal > 0 && months < MAX_PAYOFF_MONTHS) {
+    const interest = bal * monthlyRate;
+    totalInterest += interest;
+    bal = bal + interest - payment;
+    months++;
+  }
+  return { months, totalInterest, payoffAchieved: bal <= 0 };
+}
+
 export function calculateDebtPayoff(
   balance: number,
   apr: number,
@@ -43,51 +74,26 @@ export function calculateDebtPayoff(
   monthsWithout: number;
   monthsWith: number;
   interestSaved: number;
-  /** true when minPayment is too small to ever pay off the debt */
-  negativeAmortization: boolean;
+  /** True unless the minimum payment alone never clears the balance. */
+  payoffAchievedWithout: boolean;
+  /** True unless even the boosted payment never clears the balance. */
+  payoffAchievedWith: boolean;
 } {
   const monthlyRate = apr / 100 / 12;
 
-  // Guard: if the minimum payment doesn't cover the first month's interest the
-  // balance will grow on every iteration — never converging. Return an error
-  // state rather than silently running 600 loops and producing garbage output.
-  const firstMonthInterest = balance * monthlyRate;
-  if (monthlyRate > 0 && minPayment <= firstMonthInterest) {
-    return {
-      monthsWithout: 0,
-      monthsWith: 0,
-      interestSaved: 0,
-      negativeAmortization: true,
-    };
-  }
-
-  let balanceWithout = balance;
-  let monthsWithout = 0;
-  let totalInterestWithout = 0;
-  while (balanceWithout > 0 && monthsWithout < 600) {
-    const interest = balanceWithout * monthlyRate;
-    totalInterestWithout += interest;
-    balanceWithout = balanceWithout + interest - minPayment;
-    monthsWithout++;
-    if (balanceWithout <= 0) break;
-  }
-
-  let balanceWith = balance;
-  let monthsWith = 0;
-  let totalInterestWith = 0;
-  const totalPayment = minPayment + extraPayment;
-  while (balanceWith > 0 && monthsWith < 600) {
-    const interest = balanceWith * monthlyRate;
-    totalInterestWith += interest;
-    balanceWith = balanceWith + interest - totalPayment;
-    monthsWith++;
-    if (balanceWith <= 0) break;
-  }
+  const without = simulatePayoff(balance, monthlyRate, minPayment);
+  const withExtra = simulatePayoff(balance, monthlyRate, minPayment + extraPayment);
 
   return {
-    monthsWithout,
-    monthsWith,
-    interestSaved: Math.round(totalInterestWithout - totalInterestWith),
-    negativeAmortization: false,
+    monthsWithout: without.months,
+    monthsWith: withExtra.months,
+    // Only meaningful when both scenarios actually pay the debt off; otherwise 0 rather
+    // than a nonsensical difference between two "never pays off" placeholder values.
+    interestSaved:
+      without.payoffAchieved && withExtra.payoffAchieved
+        ? Math.round(without.totalInterest - withExtra.totalInterest)
+        : 0,
+    payoffAchievedWithout: without.payoffAchieved,
+    payoffAchievedWith: withExtra.payoffAchieved,
   };
 }

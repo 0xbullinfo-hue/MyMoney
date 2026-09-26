@@ -1,7 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { mockAdminEndpoints, mockWebhookLogs } from '@/lib/mock-data/admin-metrics';
+import { requireAdmin } from '@/lib/session';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (!requireAdmin(request)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   await new Promise((resolve) => setTimeout(resolve, 200));
 
   const totalEndpoints = mockAdminEndpoints.length;

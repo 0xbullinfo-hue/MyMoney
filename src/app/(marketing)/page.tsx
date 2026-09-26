@@ -26,6 +26,8 @@ export default function MarketingLandingPage() {
   const [isInitializing, setIsInitializing] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoutNotice, setLogoutNotice] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
   const [authRequiredNotice, setAuthRequiredNotice] = useState(false);
   const [adminAuthRequiredNotice, setAdminAuthRequiredNotice] = useState(false);
 
@@ -93,31 +95,57 @@ export default function MarketingLandingPage() {
     setIsModalOpen(true);
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  // Bug fix: this previously wrote a fake user object straight into `sessionStorage` and
+  // redirected — no server ever checked the email/password, and nothing server-side ever
+  // verified this "session" existed (see middleware.ts, and lib/session.ts's own comment
+  // on why this is still a demo-grade check rather than real per-user auth).
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (typeof window !== 'undefined') {
-      document.cookie = 'mm_session=demo; path=/; max-age=86400; SameSite=Lax';
-      const userData = JSON.stringify({
-        email: formEmail || 'user@mymoney.ng',
-        name: 'Adekunle Okonkwo',
-        plan: 'MyMoney Plenty',
+    setAuthError(null);
+    setIsSubmittingAuth(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formEmail, password: formPassword }),
       });
-      sessionStorage.setItem('auth_user', userData);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setAuthError(data.error ?? 'Login failed. Please try again.');
+        return;
+      }
       window.location.href = '/dashboard';
+    } catch {
+      setAuthError('Could not reach the server. Please try again.');
+    } finally {
+      setIsSubmittingAuth(false);
     }
   };
 
-  const handleRegisterComplete = () => {
-    if (typeof window !== 'undefined') {
-      document.cookie = 'mm_session=demo; path=/; max-age=86400; SameSite=Lax';
-      const userData = JSON.stringify({
-        email: formEmail || 'user@mymoney.ng',
-        name: fullName || 'New User',
-        phone: formPhone,
-        plan: selectedTier === 'free' ? 'MyMoney Free' : 'MyMoney Plenty',
+  const handleRegisterComplete = async () => {
+    setAuthError(null);
+    setIsSubmittingAuth(true);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: fullName || 'New User',
+          email: formEmail || 'user@mymoney.ng',
+          phone: formPhone,
+          tier: selectedTier,
+        }),
       });
-      sessionStorage.setItem('auth_user', userData);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setAuthError(data.error ?? 'Registration failed. Please try again.');
+        return;
+      }
       window.location.href = '/dashboard';
+    } catch {
+      setAuthError('Could not reach the server. Please try again.');
+    } finally {
+      setIsSubmittingAuth(false);
     }
   };
 
@@ -772,11 +800,19 @@ export default function MarketingLandingPage() {
                     <span>For your financial security, password auto-fill is disabled upon logout to prevent unauthorized access.</span>
                   </div>
 
+                  {authError && (
+                    <div className="p-3 rounded-xl bg-accent/10 border border-accent/30 flex items-start gap-2.5 text-[11px] text-accent font-semibold">
+                      <span className="material-symbols-outlined text-[16px] flex-shrink-0 mt-0.5">error</span>
+                      <span>{authError}</span>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    className="w-full py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-container transition-all shadow-md active:scale-95"
+                    disabled={isSubmittingAuth}
+                    className="w-full py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-container transition-all shadow-md active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    Sign In to Dashboard →
+                    {isSubmittingAuth ? 'Signing In…' : 'Sign In to Dashboard →'}
                   </button>
 
                   <div className="text-center pt-2">
@@ -964,10 +1000,14 @@ export default function MarketingLandingPage() {
                           <button
                             type="button"
                             onClick={handleRegisterComplete}
-                            className="inline-block w-full py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-container transition-all shadow-md"
+                            disabled={isSubmittingAuth}
+                            className="inline-block w-full py-3.5 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary-container transition-all shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
                           >
-                            Enter MyMoney Dashboard →
+                            {isSubmittingAuth ? 'Setting Up…' : 'Enter MyMoney Dashboard →'}
                           </button>
+                          {authError && (
+                            <p className="text-[11px] font-semibold text-accent">{authError}</p>
+                          )}
                         </div>
                       )}
                     </div>

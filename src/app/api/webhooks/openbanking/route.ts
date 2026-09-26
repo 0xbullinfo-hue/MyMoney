@@ -1,26 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyWebhookSignature } from '@/lib/webhook-validator';
+import { isReplayedEvent } from '@/lib/webhook-dedupe';
 
-// ═══ Replay protection ═══
-// The HMAC check proves authenticity and freshness within the 5-minute window,
-// but a captured request can still be replayed inside that window. Providers
-// send a unique event id; we remember recently-seen ids and acknowledge
-// repeats without reprocessing.
-// NOTE: in-memory storage is per-instance. Use Redis / a DB table with TTL
-// when running more than one server instance.
-const seenEventIds = new Map<string, number>();
-const REPLAY_WINDOW_MS = 6 * 60 * 1000; // slightly above the 5-min tolerance
-
-function isReplay(eventId: unknown): boolean {
-  if (typeof eventId !== 'string' || !eventId) return false; // cannot dedupe without an id
-  const now = Date.now();
-  for (const [id, expires] of seenEventIds) {
-    if (expires < now) seenEventIds.delete(id);
-  }
-  if (seenEventIds.has(eventId)) return true;
-  seenEventIds.set(eventId, now + REPLAY_WINDOW_MS);
-  return false;
-}
+// Bug fix: this was previously `requireTimestamp: !!timestamp`, which let a caller
+// disable the replay window simply by omitting the timestamp header — exactly the
+// bypass-by-omission the validator's own doc comment warns against. Whether this
+// provider signs a timestamp is a fixed integration fact, not something inferred
+// per-request. Set this once you confirm your aggregator's actual signing scheme.
+const PROVIDER_SIGNS_TIMESTAMP = true;
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,9 +15,8 @@ export async function POST(req: NextRequest) {
     const signature = req.headers.get('x-openbanking-signature');
     const timestamp = req.headers.get('x-openbanking-timestamp');
 
-    // SECURITY: requireTimestamp is true because our provider always signs timestamp.body
     const result = verifyWebhookSignature(rawBody, signature, timestamp, {
-      requireTimestamp: true,
+      requireTimestamp: PROVIDER_SIGNS_TIMESTAMP,
     });
 
     if (!result.isValid) {
@@ -40,9 +26,19 @@ export async function POST(req: NextRequest) {
 
     const payload = JSON.parse(rawBody);
 
-    // Idempotent acknowledge: already processed inside the replay window
-    if (isReplay(payload.event_id ?? payload.id)) {
-      return new NextResponse(null, { status: 204 });
+    // A valid signature only proves authenticity + recency, not uniqueness — a captured
+    // request can still be replayed for the whole tolerance window. De-dupe on the
+    // provider's event ID. NOTE: this in-memory store is demo-grade only and resets on
+    // restart / doesn't work across multiple server instances — replace with a Redis or
+    // DB-backed store (TTL slightly above the validator's tolerance window) in production.
+    const eventId = payload.event_id ?? payload.id;
+    if (!eventId) {
+      console.error('[OpenBanking Webhook] Payload missing event_id/id — cannot de-dupe.');
+      return new NextResponse(null, { status: 400 });
+    }
+    if (isReplayedEvent(eventId)) {
+      console.warn(`[OpenBanking Webhook] Rejected replayed event: ${eventId}`);
+      return NextResponse.json({ status: 'duplicate_ignored', nodeId: payload.node_id }, { status: 200 });
     }
 
     return NextResponse.json({

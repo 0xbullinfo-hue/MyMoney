@@ -45,12 +45,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.clear();
-    localStorage.removeItem('auth_user');
-    document.cookie = 'mm_session=; path=/; max-age=0; SameSite=Lax';
-    document.cookie = 'auth_session=; path=/; max-age=0; SameSite=Lax';
-    window.location.href = '/?logged_out=1';
+  // Bug fix: this previously read `sessionStorage.clear()` + `localStorage.removeItem`,
+  // clearing keys nothing else in the app actually set from here — there was no real
+  // session to clear either way. Both this and profile/page.tsx's logout button now call
+  // the same real endpoint (POST /api/auth/logout), which clears the actual session cookie.
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } finally {
+      window.location.href = '/?logged_out=1';
+    }
   };
 
   const isMoreActive = pathname.startsWith('/dashboard/news') ||

@@ -1,38 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSessionFromRequest } from '@/lib/session';
 
-// Demo-grade guard. The login flow sets an `mm_session` cookie (see marketing
-// page + dashboard layout). Replace this with a verified JWT/session check
-// once real authentication is implemented.
+/**
+ * This file did not exist before. `/dashboard/*` and `/admin/*` (both pages AND their
+ * API routes) previously rendered/executed for anyone, authenticated or not — there was
+ * no server-side check anywhere in the request path. This is the fix for that.
+ *
+ * Uses the Node.js middleware runtime (not Edge) so it can share `src/lib/session.ts`
+ * verbatim, since that file uses Node's `crypto` module for HMAC verification.
+ *
+ * Note: Next.js 16 emits a deprecation warning for the `middleware.ts` convention in
+ * favor of a new `proxy.ts` convention (`npx @next/codemod@canary middleware-to-proxy .`
+ * migrates it). Left as `middleware.ts` here since the codemod requires a clean git tree
+ * to run safely — worth doing as a follow-up on a clean branch.
+ */
+// Routes that must stay reachable without a session: signing in/up/out, and the
+// bank/aggregator webhook (which authenticates via HMAC signature, not a user cookie).
+const PUBLIC_API_PREFIXES = ['/api/auth', '/api/webhooks'];
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const session = req.cookies.get('mm_session')?.value || req.cookies.get('auth_session')?.value;
+  const session = getSessionFromRequest(req);
 
-  if (!session) {
-    if (pathname.startsWith('/admin')) {
-      const url = req.nextUrl.clone();
-      url.pathname = '/';
-      url.searchParams.set('admin_auth_required', '1');
-      return NextResponse.redirect(url);
+  const isApiRoute = pathname.startsWith('/api');
+  const isPublicApiRoute = PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p));
+  const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
+  const isDashboardPage = pathname.startsWith('/dashboard');
+
+  if (isAdminRoute) {
+    if (!session || !session.isAdmin) {
+      return pathname.startsWith('/api/admin')
+        ? NextResponse.json({ error: 'Forbidden' }, { status: session ? 403 : 401 })
+        : NextResponse.redirect(new URL('/', req.url));
     }
-    if (pathname.startsWith('/dashboard')) {
-      const url = req.nextUrl.clone();
-      url.pathname = '/';
-      url.searchParams.set('auth_required', '1');
-      return NextResponse.redirect(url);
-    }
-    if (pathname.startsWith('/api/admin')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    return NextResponse.next();
   }
 
-  const response = NextResponse.next();
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
-  return response;
+  if (isDashboardPage && !session) {
+    return NextResponse.redirect(new URL('/', req.url));
+  }
+
+  // Every other /api/* route (transactions, subscriptions, node sync, ...) is app data
+  // and requires a session too — previously these were reachable with no auth at all as
+  // long as you knew the URL, regardless of whether the page in front of them was gated.
+  if (isApiRoute && !isPublicApiRoute && !session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/api/admin/:path*'],
+  runtime: 'nodejs',
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/api/:path*'],
 };

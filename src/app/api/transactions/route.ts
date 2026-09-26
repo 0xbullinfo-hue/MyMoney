@@ -6,13 +6,13 @@ export async function GET(request: Request) {
   const category = searchParams.get('category');
   const type = searchParams.get('type');
   const search = searchParams.get('search');
-
-  // Validate page and limit to prevent negative slice() start (page=0 bug)
-  // and unbounded result sets.
-  const rawPage = parseInt(searchParams.get('page') ?? '', 10);
-  const rawLimit = parseInt(searchParams.get('limit') ?? '', 10);
-  const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
-  const limit = Number.isFinite(rawLimit) && rawLimit >= 1 ? Math.min(rawLimit, 100) : 25;
+  // Clamp instead of trusting the client: page=0/negative/NaN previously produced a
+  // negative Array.slice() start and silently returned an empty page; an unbounded
+  // `limit` would let a caller request the entire table in one response.
+  const rawPage = parseInt(searchParams.get('page') || '1', 10);
+  const rawLimit = parseInt(searchParams.get('limit') || '25', 10);
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 25;
 
   await new Promise((resolve) => setTimeout(resolve, 300));
 

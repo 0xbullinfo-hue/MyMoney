@@ -1,9 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { mockWebhookLogs } from '@/lib/mock-data/admin-metrics';
 import { mockTransactions } from '@/lib/mock-data/transactions';
 import { calculateRiskScore } from '@/services/risk-engine.service';
+import { requireAdmin } from '@/lib/session';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  // Defense-in-depth: middleware.ts already blocks non-admins from reaching /api/admin/*,
+  // but this route previously had no server-side check of its own at all.
+  if (!requireAdmin(request)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
   const minRisk = parseInt(searchParams.get('minRisk') || '0');

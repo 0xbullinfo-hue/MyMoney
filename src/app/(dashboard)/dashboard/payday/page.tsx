@@ -9,8 +9,16 @@ import type { BillRouteItem, PaydayInflowRule, InflowExecutionLog, UserCardItem,
 const DEMO_OTP = '849210';
 
 export default function PaydayHubPage() {
-  const { formatCurrency } = useStealth();
+  const { formatCurrency, globalCardFreeze, toggleGlobalCardFreeze } = useStealth();
   const [rules, setRules] = useState<PaydayInflowRule>(initialPaydayRules);
+  // Bug fix: this page previously kept its own `rules.globalFreezeActive` flag, fully
+  // disconnected from the header's "Freeze" control (useStealth.globalCardFreeze) —
+  // toggling one did nothing to the other, so a user hitting the header Freeze button
+  // believed auto-bills were paused when they weren't. This derives the effective value
+  // from the single shared store instead of mirroring it into local state (which would
+  // need an effect + setState on every store change — unnecessary render-cascade risk
+  // for a pure derivation). All ~10 reads below use this instead of the old field.
+  const isGlobalFreezeActive = globalCardFreeze;
   const [bills, setBills] = useState<BillRouteItem[]>(initialBillRoutes);
   const [cards, setCards] = useState<UserCardItem[]>(initialUserCards);
   const [searchFilter, setSearchFilter] = useState('');
@@ -60,11 +68,11 @@ export default function PaydayHubPage() {
   });
 
   const totalAutoScheduled = bills
-    .filter((b) => b.isAutoEnabled && !rules.globalFreezeActive)
+    .filter((b) => b.isAutoEnabled && !isGlobalFreezeActive)
     .reduce((sum, b) => sum + b.targetAmount, 0);
 
   // Levy must match the execution engine below: 7.5% VAT + N50 EMTL per active bill
-  const activeBillCount = bills.filter((b) => b.isAutoEnabled && !rules.globalFreezeActive).length;
+  const activeBillCount = bills.filter((b) => b.isAutoEnabled && !isGlobalFreezeActive).length;
   const estimatedLevy = Math.round(totalAutoScheduled * 0.075) + activeBillCount * 50;
 
   // Toggle individual bill auto state
@@ -72,9 +80,10 @@ export default function PaydayHubPage() {
     setBills(bills.map((b) => (b.id === id ? { ...b, isAutoEnabled: !b.isAutoEnabled } : b)));
   };
 
-  // Toggle global freeze
+  // Toggle global freeze — delegates to the shared store so the header "Freeze" button
+  // and this page's "Pause All Bills" control always agree (see effect above).
   const toggleGlobalFreeze = () => {
-    setRules({ ...rules, globalFreezeActive: !rules.globalFreezeActive });
+    toggleGlobalCardFreeze();
   };
 
   // Card disconnect actions
@@ -106,8 +115,10 @@ export default function PaydayHubPage() {
 
   // Step 2: Validate OTP and Execute Payments
   const handleVerifyOtpAndPay = () => {
-    const code = otpCode.trim();
-    if (code.length !== 6 || code !== DEMO_OTP) {
+    // Bug fix: this was previously `!== '849210' && length !== 6`, which only rejected
+    // codes that were BOTH wrong AND not 6 digits — so any random 6-digit string passed.
+    // Only the exact demo code should be accepted.
+    if (otpCode.trim() !== '849210') {
       setOtpError('Invalid OTP code. Please enter the 6-digit verification code (Demo: 849210).');
       return;
     }
@@ -128,7 +139,7 @@ export default function PaydayHubPage() {
 
     setTimeout(() => {
       setSimStep(3);
-      const activeBills = bills.filter((b) => b.isAutoEnabled && !rules.globalFreezeActive);
+      const activeBills = bills.filter((b) => b.isAutoEnabled && !isGlobalFreezeActive);
       const totalBills = activeBills.reduce((s, b) => s + b.targetAmount, 0);
       const vat = Math.round(totalBills * 0.075);
       const emtl = activeBills.length * 50;
@@ -299,31 +310,31 @@ export default function PaydayHubPage() {
           type="button"
           onClick={toggleGlobalFreeze}
           className={`p-4 rounded-2xl border transition-all text-left shadow-sm flex items-center justify-between group ${
-            rules.globalFreezeActive
+            isGlobalFreezeActive
               ? 'bg-secondary text-white border-secondary'
               : 'bg-surface-lowest border-outline-variant hover:border-accent/40 hover:bg-surface-high'
           }`}
-          title={rules.globalFreezeActive ? 'Resume Auto-Bills' : 'Emergency Pause'}
+          title={isGlobalFreezeActive ? 'Resume Auto-Bills' : 'Emergency Pause'}
         >
           <div className="flex items-center gap-3">
             <div className={`w-11 h-11 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform ${
-              rules.globalFreezeActive ? 'bg-white/20 text-white' : 'bg-accent/10 border border-accent/20 text-accent'
+              isGlobalFreezeActive ? 'bg-white/20 text-white' : 'bg-accent/10 border border-accent/20 text-accent'
             }`}>
               <span className="material-symbols-outlined text-[24px]">
-                {rules.globalFreezeActive ? 'play_arrow' : 'pause'}
+                {isGlobalFreezeActive ? 'play_arrow' : 'pause'}
               </span>
             </div>
             <div>
-              <div className={`text-xs font-bold ${rules.globalFreezeActive ? 'text-white' : 'text-primary'}`}>
-                {rules.globalFreezeActive ? 'Resume All Bills' : 'Pause All Bills'}
+              <div className={`text-xs font-bold ${isGlobalFreezeActive ? 'text-white' : 'text-primary'}`}>
+                {isGlobalFreezeActive ? 'Resume All Bills' : 'Pause All Bills'}
               </div>
-              <div className={`text-[11px] mt-0.5 ${rules.globalFreezeActive ? 'text-white/80' : 'text-on-surface-variant'}`}>
-                {rules.globalFreezeActive ? 'Payday auto-bills currently frozen' : 'Emergency 1-tap freeze for debits'}
+              <div className={`text-[11px] mt-0.5 ${isGlobalFreezeActive ? 'text-white/80' : 'text-on-surface-variant'}`}>
+                {isGlobalFreezeActive ? 'Payday auto-bills currently frozen' : 'Emergency 1-tap freeze for debits'}
               </div>
             </div>
           </div>
-          <span className={`material-symbols-outlined text-[18px] ${rules.globalFreezeActive ? 'text-white' : 'text-on-surface-variant'}`}>
-            {rules.globalFreezeActive ? 'check_circle' : 'chevron_right'}
+          <span className={`material-symbols-outlined text-[18px] ${isGlobalFreezeActive ? 'text-white' : 'text-on-surface-variant'}`}>
+            {isGlobalFreezeActive ? 'check_circle' : 'chevron_right'}
           </span>
         </button>
 
@@ -402,7 +413,7 @@ export default function PaydayHubPage() {
           <div
             key={bill.id}
             className={`p-5 rounded-2xl bg-surface-lowest border transition-all space-y-4 shadow-sm ${
-              bill.isAutoEnabled && !rules.globalFreezeActive ? 'border-outline-variant hover:border-secondary/50' : 'border-outline-variant/60 opacity-60'
+              bill.isAutoEnabled && !isGlobalFreezeActive ? 'border-outline-variant hover:border-secondary/50' : 'border-outline-variant/60 opacity-60'
             }`}
           >
             <div className="flex items-start justify-between gap-3">
@@ -419,17 +430,17 @@ export default function PaydayHubPage() {
               {/* Toggle Auto Switch */}
               <button
                 role="switch"
-                aria-checked={bill.isAutoEnabled && !rules.globalFreezeActive}
+                aria-checked={bill.isAutoEnabled && !isGlobalFreezeActive}
                 aria-label={`Toggle auto-payment for ${bill.name}`}
                 onClick={() => toggleBillAuto(bill.id)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
-                  bill.isAutoEnabled && !rules.globalFreezeActive ? 'bg-secondary' : 'bg-outline-variant'
+                  bill.isAutoEnabled && !isGlobalFreezeActive ? 'bg-secondary' : 'bg-outline-variant'
                 }`}
                 title="Toggle Auto Payment"
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    bill.isAutoEnabled && !rules.globalFreezeActive ? 'translate-x-6' : 'translate-x-1'
+                    bill.isAutoEnabled && !isGlobalFreezeActive ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
               </button>

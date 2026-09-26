@@ -216,7 +216,7 @@ export const initialBillRoutes: BillRouteItem[] = [
     isAutoEnabled: true,
     status: 'active',
     lastSettledDate: 'May 1, 2026',
-    description: 'Monthly rent sinking fund earning 14% p.a. (per annum) yield via Stanbic MMF.',
+    description: 'Monthly rent sinking fund earning 14% p.a., compounded daily.',
   },
   {
     id: 'bill_06',

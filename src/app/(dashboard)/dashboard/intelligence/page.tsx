@@ -183,7 +183,12 @@ export default function IntelligencePage() {
     return { ...d, ...result };
   });
 
-  const totalMonthsSaved = debtResults.reduce((s, d) => s + (d.monthsWithout - d.monthsWith), 0);
+  // Only sum entries where both scenarios genuinely pay off — otherwise the 600-month
+  // "never pays off" placeholder would silently distort these totals.
+  const totalMonthsSaved = debtResults.reduce(
+    (s, d) => (d.payoffAchievedWithout && d.payoffAchievedWith ? s + (d.monthsWithout - d.monthsWith) : s),
+    0
+  );
   const totalInterestSaved = debtResults.reduce((s, d) => s + d.interestSaved, 0);
 
   const envelopeChartData = envelopes.map((e) => ({
@@ -631,18 +636,31 @@ export default function IntelligencePage() {
                   </div>
                 </div>
 
+                {!debt.payoffAchievedWithout && (
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-accent bg-accent/10 rounded-lg px-2.5 py-1.5">
+                    <span className="material-symbols-outlined text-[14px]">warning</span>
+                    Minimum payment doesn&apos;t cover monthly interest — this balance will never clear at this rate.
+                  </div>
+                )}
+
                 <div className="grid grid-cols-3 gap-3 text-xs font-mono pt-1">
                   <div className="p-3 rounded-xl bg-surface-low text-center border border-outline-variant">
                     <div className="text-on-surface-variant">Standard Payoff</div>
-                    <div className="font-bold text-primary text-sm">{debt.monthsWithout} mo</div>
+                    <div className="font-bold text-primary text-sm">
+                      {debt.payoffAchievedWithout ? `${debt.monthsWithout} mo` : 'Never'}
+                    </div>
                   </div>
                   <div className="p-3 rounded-xl bg-secondary/10 text-center border border-secondary/30">
                     <div className="text-secondary font-semibold">With Accelerated Plan</div>
-                    <div className="font-bold text-secondary text-sm">{debt.monthsWith} mo</div>
+                    <div className="font-bold text-secondary text-sm">
+                      {debt.payoffAchievedWith ? `${debt.monthsWith} mo` : 'Never'}
+                    </div>
                   </div>
                   <div className="p-3 rounded-xl bg-accent/10 text-center border border-accent/30">
                     <div className="text-accent font-semibold">Interest Savings</div>
-                    <div className="font-bold text-accent text-sm">{formatCurrency(debt.interestSaved)}</div>
+                    <div className="font-bold text-accent text-sm">
+                      {debt.payoffAchievedWithout && debt.payoffAchievedWith ? formatCurrency(debt.interestSaved) : '—'}
+                    </div>
                   </div>
                 </div>
               </div>

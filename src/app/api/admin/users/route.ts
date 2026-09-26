@@ -1,9 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { mockUsers } from '@/lib/mock-data/admin-metrics';
+import { requireAdmin } from '@/lib/session';
 
-let usersState = [...mockUsers];
+const usersState = [...mockUsers];
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  if (!requireAdmin(request)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   const { searchParams } = new URL(request.url);
   const tier = searchParams.get('tier');
   const search = searchParams.get('search');
@@ -33,7 +38,11 @@ export async function GET(request: Request) {
   });
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
+  if (!requireAdmin(request)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const { userId, tier } = body;

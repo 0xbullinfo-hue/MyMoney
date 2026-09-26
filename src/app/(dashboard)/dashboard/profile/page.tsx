@@ -44,11 +44,17 @@ export default function UserProfilePage() {
     }
   }, [showVerifyModal, verifyStep, resendTimer]);
 
-  const handleLogout = () => {
-    // High security logout: clear session and prevent browser password remembrance
-    sessionStorage.clear();
-    localStorage.clear();
-    window.location.href = '/';
+  const handleLogout = async () => {
+    // Bug fix: this previously called `localStorage.clear()`, which wiped every key in
+    // localStorage — including `mymoney_user_verified`, so a demo-verified user was
+    // silently un-verified on every logout. It also duplicated a second, different
+    // logout implementation in dashboard/layout.tsx. Both now call the same real
+    // endpoint, which only clears the actual session cookie.
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } finally {
+      window.location.href = '/?logged_out=1';
+    }
   };
 
   const removeCard = (id: string) => {
