@@ -64,6 +64,91 @@ export interface PaydayInflowRule {
   globalFreezeActive: boolean;
 }
 
+// --- Lifecycle & Automation Engine Extensions ---
+
+export type PaydayStatus = 'ACTIVE' | 'PAUSED' | 'INACTIVE';
+
+export type PaydayRuleType = 'PERCENTAGE' | 'FIXED_AMOUNT';
+
+export type PaydayExecutionStatus = 
+  | 'SUCCESS' 
+  | 'PARTIAL_SUCCESS' 
+  | 'FAILED' 
+  | 'BYPASSED' 
+  | 'ABORTED';
+
+export type BypassReason = 
+  | 'USER_PAUSED' 
+  | 'USER_SKIPPED_NEXT' 
+  | 'CONFIG_INACTIVE' 
+  | 'TIER_RESTRICTION' 
+  | 'INSUFFICIENT_FUNDS' 
+  | 'MANUAL_OVERRIDE'
+  | 'ABORTED_IN_SAFETY_WINDOW';
+
+export interface PaydaySplitRule {
+  id: string;
+  paydayConfigId?: string;
+  name: string;
+  targetVaultId: string;
+  targetVaultName: string;
+  type: PaydayRuleType;
+  value: number; // Percentage (e.g., 25 for 25%) or Fixed NGN Amount
+  priority: number;
+  autoCardTopup: boolean;
+  autoBillPay: boolean;
+  isPaused: boolean; // Granular rule-level pause
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PaydayConfig {
+  id: string;
+  userId: string;
+  status: PaydayStatus;
+  skipNextInflow: boolean;
+  pausedAt?: string | null;
+  pauseReason?: string | null;
+  senderKeywords: string[];
+  expectedAmount?: number | null;
+  rules: PaydaySplitRule[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PaydayExecutionReceipt {
+  billName: string;
+  billerRef: string;
+  amount: number;
+  reference: string;
+  paymentSource: string;
+  token?: string; // e.g. electricity token or vendor tx id
+  status: 'success' | 'queued' | 'held_for_review' | 'skipped_paused';
+}
+
+export interface PaydayExecutionBreakdown {
+  inflowAmount: number;
+  receivingBank?: string;
+  narration?: string;
+  totalAllocated: number;
+  residualSaved: number;
+  vatLevy: number;
+  emtlFee: number;
+  receipts: PaydayExecutionReceipt[];
+  note?: string;
+}
+
+export interface PaydayExecutionLog {
+  id: string;
+  paydayConfigId: string;
+  inflowAmount: number;
+  status: PaydayExecutionStatus;
+  bypassReason?: BypassReason | null;
+  breakdown: PaydayExecutionBreakdown;
+  createdAt: string;
+}
+
+// Backward compatible alias
 export interface InflowExecutionLog {
   id: string;
   timestamp: string;
@@ -73,13 +158,5 @@ export interface InflowExecutionLog {
   residualSaved: number;
   vatLevy: number;
   emtlFee: number;
-  receipts: {
-    billName: string;
-    billerRef: string;
-    amount: number;
-    reference: string;
-    paymentSource: string;
-    token?: string; // e.g. electricity recharge token
-    status: 'success' | 'queued' | 'held_for_review';
-  }[];
+  receipts: PaydayExecutionReceipt[];
 }

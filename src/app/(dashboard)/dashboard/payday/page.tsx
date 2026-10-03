@@ -3,8 +3,28 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStealth } from '@/hooks/use-stealth';
-import { initialBillRoutes, initialPaydayRules, initialUserCards, billerCatalog } from '@/lib/mock-data/payday-routes';
-import type { BillRouteItem, PaydayInflowRule, InflowExecutionLog, UserCardItem, BillerCatalogItem, BillerPlanOption } from '@/types/payday';
+import { 
+  initialBillRoutes, 
+  initialPaydayRules, 
+  initialUserCards, 
+  billerCatalog,
+  initialPaydayConfig,
+  initialSplitRules,
+  initialPaydayExecutionLogs 
+} from '@/lib/mock-data/payday-routes';
+import type { 
+  BillRouteItem, 
+  PaydayInflowRule, 
+  InflowExecutionLog, 
+  UserCardItem, 
+  BillerCatalogItem, 
+  BillerPlanOption,
+  PaydayConfig,
+  PaydaySplitRule,
+  PaydayStatus,
+  PaydayExecutionLog 
+} from '@/types/payday';
+import { PaydayControlBar, RuleEditorModal, PaydayAuditLog } from '@/features/payday';
 
 const DEMO_OTP = '849210';
 
@@ -23,6 +43,129 @@ export default function PaydayHubPage() {
   const [cards, setCards] = useState<UserCardItem[]>(initialUserCards);
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // ═══ User Lifecycle & Automation State ═══
+  const [paydayConfig, setPaydayConfig] = useState<PaydayConfig>(initialPaydayConfig);
+  const [splitRules, setSplitRules] = useState<PaydaySplitRule[]>(initialSplitRules);
+  const [executionLogs, setExecutionLogs] = useState<PaydayExecutionLog[]>(initialPaydayExecutionLogs);
+  const [isRuleEditorOpen, setIsRuleEditorOpen] = useState(false);
+  const [simAlertNotice, setSimAlertNotice] = useState<string | null>(null);
+
+  // Lifecycle API Handlers
+  const handleStatusChange = async (status: PaydayStatus, reason?: string) => {
+    try {
+      const res = await fetch('/api/payday/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, pauseReason: reason }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPaydayConfig((prev) => ({
+          ...prev,
+          status,
+          pausedAt: status === 'PAUSED' ? new Date().toISOString() : null,
+          pauseReason: reason || null,
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to change status:', e);
+    }
+  };
+
+  const handleSkipNextToggle = async (skip: boolean) => {
+    try {
+      const res = await fetch('/api/payday/skip-next', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skip }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPaydayConfig((prev) => ({ ...prev, skipNextInflow: skip }));
+      }
+    } catch (e) {
+      console.error('Failed to toggle skip next:', e);
+    }
+  };
+
+  const handleSaveRules = async (newRules: PaydaySplitRule[]) => {
+    const res = await fetch('/api/payday/rules', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rules: newRules }),
+    });
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to update rules');
+    }
+    setSplitRules(newRules);
+    setPaydayConfig((prev) => ({ ...prev, rules: newRules }));
+  };
+
+  const handleToggleRulePause = async (ruleId: string, isPaused: boolean) => {
+    try {
+      const res = await fetch(`/api/payday/rules/${ruleId}/toggle`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPaused }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSplitRules((prev) =>
+          prev.map((r) => (r.id === ruleId ? { ...r, isPaused } : r))
+        );
+      }
+    } catch (e) {
+      console.error('Failed to toggle rule pause:', e);
+    }
+  };
+
+  const handleSimulateInflow = async () => {
+    try {
+      const res = await fetch('/api/payday/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: paydayConfig.expectedAmount || 1250000,
+          narration: 'OCT 2026 SALARY / EXECUTIVE PAYROLL',
+          receivingBank: 'GTBank (0123456789)',
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSimAlertNotice(json.data.message);
+        setTimeout(() => setSimAlertNotice(null), 8000);
+        if (json.data.bypassReason) {
+          const newLog: PaydayExecutionLog = {
+            id: `log_sim_${Date.now()}`,
+            paydayConfigId: paydayConfig.id,
+            inflowAmount: paydayConfig.expectedAmount || 1250000,
+            status: 'BYPASSED',
+            bypassReason: json.data.bypassReason,
+            breakdown: {
+              inflowAmount: paydayConfig.expectedAmount || 1250000,
+              receivingBank: 'GTBank (0123456789)',
+              narration: 'OCT 2026 SALARY / EXECUTIVE PAYROLL',
+              totalAllocated: 0,
+              residualSaved: 0,
+              vatLevy: 0,
+              emtlFee: 0,
+              receipts: [],
+              note: `Simulated inflow intercepted: ${json.data.bypassReason}. Funds untouched.`,
+            },
+            createdAt: new Date().toISOString(),
+          };
+          setExecutionLogs((prev) => [newLog, ...prev]);
+          if (json.data.bypassReason === 'USER_SKIPPED_NEXT') {
+            setPaydayConfig((prev) => ({ ...prev, skipNextInflow: false }));
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to simulate inflow:', e);
+    }
+  };
 
   // Approval and Payment Simulation Modal
   const [isApproving, setIsApproving] = useState(false);
@@ -236,6 +379,38 @@ export default function PaydayHubPage() {
           </p>
         </div>
       </div>
+
+      {/* ═══ Payday Lifecycle Control Bar ═══ */}
+      <div className="print:hidden">
+        <PaydayControlBar
+          config={paydayConfig}
+          onStatusChange={handleStatusChange}
+          onSkipNextToggle={handleSkipNextToggle}
+          onOpenRuleEditor={() => setIsRuleEditorOpen(true)}
+          onSimulateInflow={handleSimulateInflow}
+        />
+      </div>
+
+      {/* Simulate Inflow Alert Notice */}
+      {simAlertNotice && (
+        <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 text-xs font-medium flex items-center gap-2 print:hidden">
+          <span>ℹ️</span> {simAlertNotice}
+        </div>
+      )}
+
+      {/* PAUSED / INACTIVE Warning Banner */}
+      {paydayConfig.status === 'PAUSED' && (
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs font-semibold flex items-center gap-2 print:hidden">
+          <span>⏸</span>
+          Automation paused — Incoming salary credits will be logged but not disbursed. Your bill routes are safe and un-modified.
+        </div>
+      )}
+      {paydayConfig.status === 'INACTIVE' && (
+        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-800 text-xs font-semibold flex items-center gap-2 print:hidden">
+          <span>⚠️</span>
+          Automation permanently deactivated — All split rules are preserved. Click &ldquo;Resume Automation&rdquo; to re-arm the engine.
+        </div>
+      )}
 
       {/* ═══ Top Summary KPI Bar ═══ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 print:hidden">
@@ -1135,6 +1310,20 @@ export default function PaydayHubPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* ═══ Payday Audit Vault Log ═══ */}
+      <div className="print:hidden">
+        <PaydayAuditLog logs={executionLogs} />
+      </div>
+
+      {/* ═══ Rule Editor Modal ═══ */}
+      <RuleEditorModal
+        isOpen={isRuleEditorOpen}
+        initialRules={splitRules}
+        onClose={() => setIsRuleEditorOpen(false)}
+        onSave={handleSaveRules}
+        onToggleRulePause={handleToggleRulePause}
+      />
     </div>
   );
 }

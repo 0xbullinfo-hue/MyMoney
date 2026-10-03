@@ -5,7 +5,7 @@
 **Git Remote:** `https://github.com/0xbullinfo-hue/MyMoney.git`  
 **Default Branch:** `main`  
 **Design Palette:** 05 Earthy Minimal  
-**Last Updated:** 2026-09-26  
+**Last Updated:** 2026-10-03  
 
 ---
 
@@ -67,6 +67,18 @@ MyMoney is a sovereign financial platform built specifically for multi-bank acco
 ### 3.8 Currency Formatting Guard
 - The standard currency formatter in `src/lib/formatters.ts` (`formatCurrency`) automatically appends the `₦` symbol. Never manually prefix `₦` before calling `formatCurrency(val)` to avoid double currency symbols (`₦₦`).
 
+### 3.9 Payday Lifecycle State Machine
+- The engine evaluates lifecycle states in strict waterfall priority: `INACTIVE` → abort with `CONFIG_INACTIVE`. `PAUSED` → log and skip with `USER_PAUSED`. `SKIP_NEXT=true` → one-cycle skip then auto-reset. `ACTIVE` → proceed to 30-second safety queue.
+- The `PaydayGuard` always resets `skipNextPayday = false` atomically after consuming it, preventing double-skips.
+
+### 3.10 PaydayQueue Safety Window
+- The 30-second buffer uses an in-memory `Map<string, NodeJS.Timeout>`. This is intentional for dev/simulation mode only. In production, replace with `BullMQ` (Redis-backed) for persistence across restarts and horizontal pod scaling. Key is `userId` — only one pending job per user at a time.
+
+### 3.11 Invoice & Token Delivery
+- `src/lib/payday-invoice.ts` is a **client-only** utility (no `server-only` import). It uses `window.open()` to write a fully self-contained HTML receipt in a new tab. If popups are blocked, it falls back to downloading a `.html` file via `URL.createObjectURL()`.
+- Electricity tokens follow the `DDDD-DDDD-DDDD-DDDD` pattern. Bridgecard top-up refs start with `BC_TOPUP_`. Both are auto-detected in `CopyableToken` for appropriate labeling.
+- Never store raw electricity tokens in browser `localStorage` — they should only exist in server-side `PaydayExecutionLog.breakdown` JSON and be surfaced on-demand.
+
 ---
 
 ## 4. Key File Map & Roles
@@ -80,8 +92,15 @@ MyMoney is a sovereign financial platform built specifically for multi-bank acco
 | `src/lib/webhook-validator.ts` | Constant-time HMAC-SHA256 validator with replay protection |
 | `src/hooks/use-stealth.ts` | Hardened Zustand store for sovereign balance obfuscation |
 | `src/types/index.ts` | Core domain type definitions (User, BankNode, Transaction, WebhookLog) |
-| `src/types/payday.ts` | Payday domain contracts (BillerCatalogItem, BillRouteItem, PaydayInflowRule) |
-| `src/app/(dashboard)/dashboard/payday/page.tsx` | Autonomous waterfall inflow orchestrator with 2FA OTP |
+| `src/types/payday.ts` | Extended Payday domain contracts: `PaydayConfig`, `PaydaySplitRule`, `PaydayExecutionLog`, `PaydayExecutionReceipt` and all lifecycle enums |
+| `src/services/payday/guard.ts` | `PaydayGuard` — lifecycle evaluation middleware (INACTIVE / PAUSED / SKIP_NEXT gating) |
+| `src/services/payday/queue.ts` | `PaydayQueue` — 30-second safety buffer with `cancelPendingPayday()` Kill Switch |
+| `src/services/payday/engine.ts` | `PaydayEngine` — waterfall split execution + statutory tax calculations |
+| `src/lib/payday-invoice.ts` | Client-side printable invoice generator with token extraction (popup + fallback blob download) |
+| `src/features/payday/PaydayControlBar.tsx` | Lifecycle control UI: status badge, Pause/Resume, Skip, countdown, Kill Switch, Test Inflow |
+| `src/features/payday/RuleEditorModal.tsx` | Atomic split rule editor with 100% allocation meter |
+| `src/features/payday/PaydayAuditLog.tsx` | Filterable execution audit log with copyable tokens and Invoice download |
+| `src/app/(dashboard)/dashboard/payday/page.tsx` | Autonomous waterfall inflow orchestrator with full lifecycle controls |
 | `src/app/(dashboard)/dashboard/ledger/page.tsx` | Searchable transaction telemetry feed with CSV export |
 | `src/app/(dashboard)/dashboard/intelligence/page.tsx` | Subscriptions radar, envelope budgeting, and debt payoff simulator |
 | `src/app/(admin)/admin/health/page.tsx` | Dark-forest system health console for CBN & bank API telemetry |

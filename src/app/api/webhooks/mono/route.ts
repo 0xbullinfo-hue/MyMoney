@@ -47,6 +47,33 @@ export async function POST(req: NextRequest) {
           data: { status: 'disconnected' },
         });
       }
+    } else if (
+      event === 'mono.events.account_credited' ||
+      event === 'account.credit_alert' ||
+      (event === 'mono.events.account_updated' && data?.amount && data?.type === 'credit')
+    ) {
+      const creditAmount = (data?.amount || 0) / 100;
+      const narration = data?.narration || data?.description || 'MONO CREDIT INFLOW';
+      const accountId = data?.account?._id || data?.account;
+
+      // Find user from bank node
+      let userId = 'usr_adekunle_01';
+      if (isDatabaseConfigured() && accountId) {
+        const node = await prisma.bankNode.findFirst({
+          where: { monoAccountId: accountId },
+          select: { userId: true },
+        });
+        if (node?.userId) userId = node.userId;
+      }
+
+      // Run PaydayGuard
+      const { evaluatePaydayInflowGuard, enqueuePendingPayday } = await import('@/services/payday');
+      const guardResult = await evaluatePaydayInflowGuard(userId, creditAmount, narration);
+
+      if (guardResult.allowed) {
+        // Enqueue into 30s safety window queue
+        enqueuePendingPayday(userId, guardResult.config, creditAmount, narration);
+      }
     }
 
     // 4. Log Webhook Event

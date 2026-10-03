@@ -29,6 +29,7 @@ model User {
   subscriptions      Subscription[]
   bills              BillRoute[]
   paydayRule         PaydayRule?
+  paydayConfig       PaydayConfig?
 
   @@map("users")
 }
@@ -160,3 +161,87 @@ model AuditLog {
 
   @@map("audit_logs")
 }
+
+enum PaydayStatus {
+  ACTIVE
+  PAUSED
+  INACTIVE
+}
+
+enum PaydayRuleType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum PaydayExecutionStatus {
+  SUCCESS
+  PARTIAL_SUCCESS
+  FAILED
+  BYPASSED
+  ABORTED
+}
+
+enum BypassReason {
+  USER_PAUSED
+  USER_SKIPPED_NEXT
+  CONFIG_INACTIVE
+  TIER_RESTRICTION
+  INSUFFICIENT_FUNDS
+  MANUAL_OVERRIDE
+  ABORTED_IN_SAFETY_WINDOW
+}
+
+model PaydayConfig {
+  id             String               @id @default(cuid())
+  userId         String               @unique
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status         PaydayStatus         @default(ACTIVE)
+  skipNextInflow Boolean              @default(false)
+  pausedAt       DateTime?
+  pauseReason    String?
+  senderKeywords String               @default("SALARY,DIVIDEND,PAYROLL,CONSULTING")
+  expectedAmount Float?
+
+  rules          PaydaySplitRule[]
+  executions     PaydayExecutionLog[]
+
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@map("payday_configs")
+}
+
+model PaydaySplitRule {
+  id              String         @id @default(cuid())
+  paydayConfigId  String
+  paydayConfig    PaydayConfig   @relation(fields: [paydayConfigId], references: [id], onDelete: Cascade)
+  name            String
+  targetVaultId   String
+  targetVaultName String
+  type            PaydayRuleType @default(PERCENTAGE)
+  value           Float
+  priority        Int            @default(0)
+
+  autoCardTopup   Boolean        @default(false)
+  autoBillPay     Boolean        @default(false)
+  isPaused        Boolean        @default(false)
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("payday_split_rules")
+}
+
+model PaydayExecutionLog {
+  id             String                @id @default(cuid())
+  paydayConfigId String
+  paydayConfig   PaydayConfig          @relation(fields: [paydayConfigId], references: [id], onDelete: Cascade)
+  inflowAmount   Float
+  status         PaydayExecutionStatus
+  bypassReason   BypassReason?
+  breakdown      String                @db.Text
+  createdAt      DateTime              @default(now())
+
+  @@map("payday_execution_logs")
+}
+

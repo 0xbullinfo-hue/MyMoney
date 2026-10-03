@@ -2,7 +2,7 @@
 
 **Project:** MyMoney (Sovereign Personal Finance)  
 **Current Status:** Production Polish & Continuous Maintenance  
-**Last Synchronized:** 2026-09-26  
+**Last Synchronized:** 2026-10-03  
 
 ---
 
@@ -14,6 +14,7 @@
 | **Public Marketing & Runway Engine** | 100% Completed | Interactive dual-sliders verified; auth notice banner active |
 | **Sovereign Executive Dashboard (`/dashboard`)** | 100% Completed | Recharts donut, node grid, zombie radar verified |
 | **Payday Waterfall Orchestrator (`/dashboard/payday`)** | 100% Completed | Biller catalog, OTP cooldown, EMTL/VAT calculations verified |
+| **Payday Lifecycle & Automation Engine** | 100% Completed | Guard middleware, 30s safety queue, Kill Switch, Rule Editor, Audit Vault, Invoice Download, Token Delivery all verified |
 | **Financial Intelligence Suite (`/dashboard/intelligence`)** | 100% Completed | Subscriptions, Envelopes & Debt Avalanche verified |
 | **Transaction Telemetry Feed (`/dashboard/ledger`)** | 100% Completed | Instant search, CSV export, Suspense boundary verified |
 | **Bank Node Mesh (`/dashboard/mesh`)** | 100% Completed | Multi-node topology visualizer verified |
@@ -73,6 +74,20 @@
 - [x] Cleared `!important` declarations in `globals.css` so Tailwind hover and state variants function cleanly.
 - [x] Resolved hydration mismatch in `/admin/health` table headers (`System Target` / `Status` / `Ping` / `Queue`).
 - [x] Resolved duplicate currency symbol (`₦₦`) on marketing calculator.
+
+### Milestone 8: Payday Lifecycle & Automation Controls
+- [x] Extended `schema.prisma` with `PaydayConfig`, `PaydaySplitRule`, `PaydayExecutionLog` models and `PaydayStatus`, `BypassReason`, `PaydayExecutionStatus`, `PaydayRuleType` enums.
+- [x] Created `PaydayGuard` middleware (`src/services/payday/guard.ts`) — evaluates `INACTIVE` → `PAUSED` → `SKIP_NEXT` lifecycle states before any disbursement.
+- [x] Created `PaydayQueue` service (`src/services/payday/queue.ts`) — 30-second safety buffer with in-memory Map of active jobs; exposes `cancelPendingPayday()` Kill Switch.
+- [x] Created `PaydayEngine` service (`src/services/payday/engine.ts`) — waterfall split logic with statutory VAT (7.5%) and EMTL (₦50 × tx count) calculations.
+- [x] Wired Guard + Queue into Mono webhook handler (`/api/webhooks/mono/route.ts`).
+- [x] Built six API routes under `/api/payday/`: `/status`, `/skip-next`, `/rules`, `/rules/[ruleId]/toggle`, `/cancel-pending`, `/simulate`.
+- [x] Built `PaydayControlBar` component — status badge, Pause/Resume, Skip Next, 30s animated countdown + Kill Switch, Test Inflow button.
+- [x] Built `RuleEditorModal` component — atomic split rule editing with live 100% allocation meter and per-rule pause toggles.
+- [x] Built `PaydayAuditLog` component — filterable log with `EXECUTED` / `BYPASSED` / `ABORTED` views, expandable receipt details.
+- [x] Built `src/lib/payday-invoice.ts` — generates printable HTML invoice (new tab) with full disbursement breakdown, statutory tax totals, and prominently highlighted utility tokens.
+- [x] Enhanced `PaydayAuditLog` with copyable `CopyableToken` component — auto-detects electricity token, Bridgecard top-up ref, or service token; clipboard copy with visual confirmation.
+- [x] Added per-log `⬇ Invoice` download button on executed logs, surfacing full receipt + token delivery in print-ready format.
 
 ---
 
