@@ -117,3 +117,5 @@ export interface BankInstitution {
 
 export * from './wallet';
 export * from './cards';
+export * from './bills';
+export * from './rules';

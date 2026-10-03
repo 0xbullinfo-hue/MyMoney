@@ -11,6 +11,7 @@ interface PaydayControlBarProps {
   onSkipNextToggle: (skip: boolean) => Promise<void>;
   onOpenRuleEditor: () => void;
   onSimulateInflow: () => Promise<void>;
+  onOpenFreelancerSplit?: () => void;
 }
 
 export function PaydayControlBar({
@@ -19,6 +20,7 @@ export function PaydayControlBar({
   onSkipNextToggle,
   onOpenRuleEditor,
   onSimulateInflow,
+  onOpenFreelancerSplit,
 }: PaydayControlBarProps) {
   const { formatCurrency } = useStealth();
   const [showPauseConfirm, setShowPauseConfirm] = useState(false);
@@ -295,6 +297,19 @@ export function PaydayControlBar({
             <span>🧪</span>
             Test Inflow
           </button>
+
+          {/* Freelancer Manual Split Trigger */}
+          {onOpenFreelancerSplit && (
+            <button
+              type="button"
+              onClick={onOpenFreelancerSplit}
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-[#2E3A2F] text-white hover:bg-[#3C4B3D] transition flex items-center gap-1 cursor-pointer shadow-xs"
+              title="Manual income split for freelancers and contractors"
+            >
+              <span>⚡</span>
+              Split Inflow
+            </button>
+          )}
 
           {/* Emergency Stop / Deactivate */}
           {config.status !== 'INACTIVE' && (

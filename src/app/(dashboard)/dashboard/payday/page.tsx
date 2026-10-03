@@ -31,7 +31,10 @@ import {
   RuleEditorModal, 
   PaydayAuditLog, 
   SubVaultsOverview, 
-  VirtualCardWidget 
+  VirtualCardWidget,
+  UtilityBillsManager,
+  TimedTransfersManager,
+  FreelancerSplitModal
 } from '@/features/payday';
 
 const DEMO_OTP = '849210';
@@ -82,6 +85,7 @@ export default function PaydayHubPage() {
   const [splitRules, setSplitRules] = useState<PaydaySplitRule[]>(initialSplitRules);
   const [executionLogs, setExecutionLogs] = useState<PaydayExecutionLog[]>(initialPaydayExecutionLogs);
   const [isRuleEditorOpen, setIsRuleEditorOpen] = useState(false);
+  const [isFreelancerModalOpen, setIsFreelancerModalOpen] = useState(false);
   const [simAlertNotice, setSimAlertNotice] = useState<string | null>(null);
 
   // Lifecycle API Handlers
@@ -425,6 +429,7 @@ export default function PaydayHubPage() {
           onSkipNextToggle={handleSkipNextToggle}
           onOpenRuleEditor={() => setIsRuleEditorOpen(true)}
           onSimulateInflow={handleSimulateInflow}
+          onOpenFreelancerSplit={() => setIsFreelancerModalOpen(true)}
         />
       </div>
 
@@ -509,6 +514,20 @@ export default function PaydayHubPage() {
           onCardUpdated={(updated) => {
             setVirtualCards((prev) => prev.map((c) => c.id === updated.id ? updated : c));
           }}
+        />
+      </div>
+
+      {/* ═══ Phase 3: VTPass Utility Auto-Recharge Manager ═══ */}
+      <div className="print:hidden">
+        <UtilityBillsManager
+          onRechargeComplete={fetchWalletAndCards}
+        />
+      </div>
+
+      {/* ═══ Phase 4: Programmable Timed Transfers (Locked Envelopes) ═══ */}
+      <div className="print:hidden">
+        <TimedTransfersManager
+          onTransfersExecuted={fetchWalletAndCards}
         />
       </div>
 
@@ -1381,6 +1400,19 @@ export default function PaydayHubPage() {
         onClose={() => setIsRuleEditorOpen(false)}
         onSave={handleSaveRules}
         onToggleRulePause={handleToggleRulePause}
+      />
+
+      {/* ═══ Freelancer Manual Split Modal ═══ */}
+      <FreelancerSplitModal
+        isOpen={isFreelancerModalOpen}
+        onClose={() => setIsFreelancerModalOpen(false)}
+        rules={splitRules}
+        onSplitSuccess={(log) => {
+          if (log) {
+            setExecutionLogs((prev) => [log, ...prev]);
+          }
+          fetchWalletAndCards();
+        }}
       />
     </div>
   );
