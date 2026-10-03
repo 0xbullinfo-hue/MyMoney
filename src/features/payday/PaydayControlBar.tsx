@@ -207,26 +207,26 @@ export function PaydayControlBar({
       </AnimatePresence>
 
       {/* Main Control Card */}
-      <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-md rounded-2xl p-5 border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+      <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-md rounded-2xl p-5 border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
         {/* Left: Status & Indicators */}
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             {getStatusBadge()}
             
             {/* Skip Next Status Indicator */}
             {config.skipNextInflow && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#C96F4F]/15 text-[#C96F4F] border border-[#C96F4F]/30 animate-pulse">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#C96F4F]/15 text-[#C96F4F] border border-[#C96F4F]/30 animate-pulse whitespace-nowrap">
                 <span>⏭</span>
                 SKIP NEXT CYCLE ACTIVE
               </span>
             )}
 
-            <span className="text-xs text-stone-500 font-mono">
+            <span className="text-xs text-stone-500 font-mono whitespace-nowrap">
               Expected: {formatCurrency(config.expectedAmount || 1250000)}
             </span>
           </div>
 
-          <p className="text-xs text-stone-500 dark:text-stone-400">
+          <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-2 xl:line-clamp-none">
             {config.status === 'ACTIVE' &&
               'Autonomous waterfall active. Inflows trigger split allocations across your configured sub-vaults.'}
             {config.status === 'PAUSED' &&
@@ -236,28 +236,28 @@ export function PaydayControlBar({
           </p>
         </div>
 
-        {/* Right: Quick Action Controls */}
-        <div className="flex items-center gap-2.5 flex-wrap w-full lg:w-auto">
+        {/* Right: Quick Action Controls - Single Horizontal Line */}
+        <div className="flex items-center gap-2 flex-nowrap overflow-x-auto w-full xl:w-auto pb-1 xl:pb-0 scrollbar-none shrink-0">
           {/* Master Pause / Resume Switch */}
           {config.status === 'ACTIVE' ? (
             <button
               type="button"
               onClick={() => setShowPauseConfirm(true)}
               disabled={isUpdating}
-              className="px-3.5 py-2 rounded-xl text-xs font-medium border border-amber-500/40 text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 transition flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl text-xs font-medium border border-amber-500/40 text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs"
             >
               <span>⏸</span>
-              Pause Automation
+              <span>Pause</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={handleResume}
               disabled={isUpdating}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#2E3A2F] text-white hover:bg-[#3C4B3D] transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#2E3A2F] text-white hover:bg-[#3C4B3D] transition flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap shrink-0"
             >
               <span>▶</span>
-              Resume Automation
+              <span>Resume</span>
             </button>
           )}
 
@@ -266,36 +266,36 @@ export function PaydayControlBar({
             type="button"
             onClick={() => onSkipNextToggle(!config.skipNextInflow)}
             disabled={isUpdating || config.status !== 'ACTIVE'}
-            className={`px-3.5 py-2 rounded-xl text-xs font-medium border transition flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs ${
               config.skipNextInflow
-                ? 'bg-[#C96F4F] text-white border-[#C96F4F] shadow-sm'
+                ? 'bg-[#C96F4F] text-white border-[#C96F4F]'
                 : 'border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
             }`}
             title="Bypass only the next incoming payroll event without modifying rules"
           >
             <span>⏭</span>
-            {config.skipNextInflow ? 'Cancel Skip Next' : 'Skip Next Payday'}
+            <span>{config.skipNextInflow ? 'Cancel Skip' : 'Skip Next'}</span>
           </button>
 
           {/* Rule Editor Trigger */}
           <button
             type="button"
             onClick={onOpenRuleEditor}
-            className="px-3.5 py-2 rounded-xl text-xs font-medium border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition flex items-center gap-1.5 cursor-pointer"
+            className="px-3 py-1.5 rounded-xl text-xs font-medium border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs"
           >
             <span>⚙️</span>
-            Edit Rules
+            <span>Edit Rules</span>
           </button>
 
           {/* Simulate Inflow Test Trigger */}
           <button
             type="button"
             onClick={onSimulateInflow}
-            className="px-3 py-2 rounded-xl text-xs font-medium bg-[#6B7F5B]/15 text-[#2E3A2F] dark:text-stone-200 border border-[#6B7F5B]/30 hover:bg-[#6B7F5B]/25 transition flex items-center gap-1 cursor-pointer"
+            className="px-3 py-1.5 rounded-xl text-xs font-medium bg-[#6B7F5B]/15 text-[#2E3A2F] dark:text-stone-200 border border-[#6B7F5B]/30 hover:bg-[#6B7F5B]/25 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-xs"
             title="Dispatch a test salary credit to test the Guard and 30s Safety Window"
           >
             <span>🧪</span>
-            Test Inflow
+            <span>Test Inflow</span>
           </button>
 
           {/* Freelancer Manual Split Trigger */}
@@ -303,11 +303,11 @@ export function PaydayControlBar({
             <button
               type="button"
               onClick={onOpenFreelancerSplit}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-[#2E3A2F] text-white hover:bg-[#3C4B3D] transition flex items-center gap-1 cursor-pointer shadow-xs"
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#2E3A2F] text-white hover:bg-[#3C4B3D] transition flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap shrink-0"
               title="Manual income split for freelancers and contractors"
             >
               <span>⚡</span>
-              Split Inflow
+              <span>Split Inflow</span>
             </button>
           )}
 
@@ -316,7 +316,7 @@ export function PaydayControlBar({
             <button
               type="button"
               onClick={() => setShowDeactivateConfirm(true)}
-              className="p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition cursor-pointer"
+              className="p-1.5 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition cursor-pointer whitespace-nowrap shrink-0"
               title="Deactivate automation permanently"
             >
               <span>✕</span>
