@@ -80,6 +80,14 @@ MyMoney is a sovereign personal financial platform engineered for multi-bank acc
   - 30-second cooldown timer on OTP resend requests to prevent SMS/push flooding.
 - **Inflow Execution Logs & Recharge Token Vault:**
   - Historical settlement log with downloadable transaction receipts and meter recharge token display.
+- **Central Financing Pool & Sub-Vaults (Anchor BaaS):**
+  - Consolidates incoming salary into a dedicated Anchor BaaS virtual NUBAN pool.
+  - Automatically splits funds across dedicated sub-ledgers: `Subscription_Vault`, `Utility_Vault`, `Locked_Custom_Vaults` (Time-locked Rent, School Fees, and FGN Treasury Sweeps).
+  - Visual Sub-Vault cards with target progress meters and ad-hoc deposit modals.
+- **Programmatic Virtual Card Issuance (Bridgecard):**
+  - Issuance of USD and NGN virtual cards tied directly to the `Subscription_Vault`.
+  - 3D interactive flip animation, PIN-authorized full PAN/CVV reveal, 1-click clipboard copy, and instant card freeze.
+  - Payday auto-top-up so international subscriptions (Netflix, OpenAI, Apple Music) never decline.
 
 ### 3.4 Financial Intelligence Suite (`/dashboard/intelligence`)
 - **Subscription Radar:**

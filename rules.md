@@ -108,6 +108,9 @@
     ```
 - **Idempotency & Replay Defense:**
   - Inbound webhook endpoints must check and record `eventId` with TTL in cache before executing financial state mutations.
+- **Zero Card Data Storage & Virtual Card Security:**
+  - Plaintext full PAN, CVV, and expiration must **NEVER** be stored in client state, `localStorage`, or transmitted without authenticated PIN/OTP verification. Masked PAN (`•••• 1234`) is the only card property permitted in unauthenticated client rendering.
+  - BaaS ledger transactions and sub-vault allocations must store monetary amounts in **integer minor units** (Kobo for NGN, cents for USD) to eliminate IEEE 754 floating-point rounding inaccuracies.
 - **HTTP Status Codes:**
   - Use semantic status codes: `200` OK, `201` Created, `400` Bad Request, `401` Unauthorized, `403` Forbidden, `404` Not Found, `429` Rate Limited, `500` Internal Server Error.
 

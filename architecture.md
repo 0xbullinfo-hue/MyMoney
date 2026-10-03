@@ -87,16 +87,21 @@ mymoney/
 │   │   │   └── page.tsx                   # Landing page, runway engine & wizard
 │   │   ├── api/                           # Backend API Route Handlers
 │   │   │   ├── admin/                     # Health, users, and audit endpoints
-│   │   │   ├── auth/                      # Session & NextAuth endpoints
+│   │   │   ├── auth/                      # Session, login, logout endpoints
+│   │   │   ├── cards/                     # Bridgecard virtual card issuance, reveal & top-up
 │   │   │   ├── node/sync/                 # Bank node synchronization trigger
+│   │   │   ├── payday/                    # Lifecycle status, skip-next, rules, cancel-pending
 │   │   │   ├── subscriptions/             # Recurring subscription management & block
 │   │   │   ├── transactions/              # Ledger retrieval & filtering
+│   │   │   ├── wallet/                    # Anchor BaaS central wallet & sub-vault deposits
 │   │   │   └── webhooks/openbanking/      # Inbound HMAC-verified bank webhook
 │   │   ├── error.tsx                      # Global client-side error boundary
 │   │   ├── globals.css                    # Design system tokens & utility overrides
 │   │   ├── layout.tsx                     # Root HTML document & theme provider
 │   │   ├── loading.tsx                    # Top-level route transition loader
 │   │   └── not-found.tsx                  # 404 sovereign error fallback
+│   ├── features/                          # Cohesive feature UI widgets
+│   │   └── payday/                        # ControlBar, SubVaults, CardsWidget, RuleEditor, AuditLog
 │   ├── hooks/                             # Custom React & Zustand client hooks
 │   │   ├── use-calculator.ts              # Cash runway dual-slider calculations
 │   │   ├── use-node-mesh.ts               # Multi-bank node connection state
@@ -105,15 +110,21 @@ mymoney/
 │   │   ├── mock-data/                     # Institutional mock data repositories
 │   │   ├── crypto.ts                      # Server-only AES-256-GCM encryption engine
 │   │   ├── formatters.ts                  # Currency, date, and masked text formatters
+│   │   ├── payday-invoice.ts              # Client-side printable invoice generator
 │   │   ├── tailwind-tokens.ts             # Programmatic Earthy Minimal token exports
 │   │   └── webhook-validator.ts           # Constant-time HMAC-SHA256 validator
 │   ├── middleware.ts                      # Edge route guard & HTTP security headers
 │   ├── services/                          # Business logic service classes
+│   │   ├── cards/                         # Bridgecard virtual card service
 │   │   ├── open-banking.service.ts        # Open banking multi-institution adapter
-│   │   └── risk-engine.service.ts         # Financial runway & risk scoring
+│   │   ├── payday/                        # PaydayEngine, PaydayGuard, PaydayQueue
+│   │   ├── risk-engine.service.ts         # Financial runway & risk scoring
+│   │   └── wallet/                        # Anchor BaaS Central Financing Wallet & Sub-Vaults
 │   └── types/                             # Comprehensive TypeScript type definitions
+│       ├── cards.ts                       # Bridgecard virtual cards & credentials
 │       ├── index.ts                       # Core domain entities & interfaces
-│       └── payday.ts                      # Biller catalog, cards, and inflow contracts
+│       ├── payday.ts                      # Biller catalog, cards, and inflow contracts
+│       └── wallet.ts                      # Anchor BaaS sub-vaults & double-entry ledger
 ├── prd.md                                 # Product Requirements Document
 ├── architecture.md                        # System Architecture Document (this file)
 ├── rules.md                               # Coding Rules & Engineering Standards

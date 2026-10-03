@@ -79,6 +79,11 @@ MyMoney is a sovereign financial platform built specifically for multi-bank acco
 - Electricity tokens follow the `DDDD-DDDD-DDDD-DDDD` pattern. Bridgecard top-up refs start with `BC_TOPUP_`. Both are auto-detected in `CopyableToken` for appropriate labeling.
 - Never store raw electricity tokens in browser `localStorage` — they should only exist in server-side `PaydayExecutionLog.breakdown` JSON and be surfaced on-demand.
 
+### 3.12 Anchor BaaS Financing Ledger & Bridgecard Virtual Cards
+- **Central Financing Pool**: Primary salary credit lands into the Anchor BaaS parent wallet (`accountNumber: 9920194821`), which maintains double-entry journal balance across sub-vaults (`Subscription_Vault`, `Utility_Vault`, `Locked_Custom_Vaults`).
+- **Bridgecard Virtual Cards**: USD and NGN virtual cards are tied to the `Subscription_Vault`. On Payday execution, card balances are auto-topped up so international subscriptions (Netflix, OpenAI, Apple Music) never decline.
+- **Card Security Protocol**: Plaintext PAN and CVV are never persisted to the client DOM. They require PIN authentication (`849210` demo PIN) via `/api/cards/[cardId]/reveal`. 1-tap card freeze disables debits instantly.
+
 ---
 
 ## 4. Key File Map & Roles
@@ -92,15 +97,15 @@ MyMoney is a sovereign financial platform built specifically for multi-bank acco
 | `src/lib/webhook-validator.ts` | Constant-time HMAC-SHA256 validator with replay protection |
 | `src/hooks/use-stealth.ts` | Hardened Zustand store for sovereign balance obfuscation |
 | `src/types/index.ts` | Core domain type definitions (User, BankNode, Transaction, WebhookLog) |
-| `src/types/payday.ts` | Extended Payday domain contracts: `PaydayConfig`, `PaydaySplitRule`, `PaydayExecutionLog`, `PaydayExecutionReceipt` and all lifecycle enums |
-| `src/services/payday/guard.ts` | `PaydayGuard` — lifecycle evaluation middleware (INACTIVE / PAUSED / SKIP_NEXT gating) |
-| `src/services/payday/queue.ts` | `PaydayQueue` — 30-second safety buffer with `cancelPendingPayday()` Kill Switch |
-| `src/services/payday/engine.ts` | `PaydayEngine` — waterfall split execution + statutory tax calculations |
-| `src/lib/payday-invoice.ts` | Client-side printable invoice generator with token extraction (popup + fallback blob download) |
-| `src/features/payday/PaydayControlBar.tsx` | Lifecycle control UI: status badge, Pause/Resume, Skip, countdown, Kill Switch, Test Inflow |
-| `src/features/payday/RuleEditorModal.tsx` | Atomic split rule editor with 100% allocation meter |
-| `src/features/payday/PaydayAuditLog.tsx` | Filterable execution audit log with copyable tokens and Invoice download |
-| `src/app/(dashboard)/dashboard/payday/page.tsx` | Autonomous waterfall inflow orchestrator with full lifecycle controls |
+| `src/types/payday.ts` | Extended Payday domain contracts: `PaydayConfig`, `PaydaySplitRule`, `PaydayExecutionLog`, etc. |
+| `src/types/wallet.ts` | Anchor BaaS Central Financing Wallet, Sub-Vaults, and Ledger journal types |
+| `src/types/cards.ts` | Bridgecard Virtual Cards (USD/NGN, Visa/Mastercard), credentials reveal, and transactions |
+| `src/services/wallet/anchor.service.ts` | Anchor BaaS Central Wallet & Sub-Vaults ledger service with double-entry split logic |
+| `src/services/cards/bridgecard.service.ts` | Bridgecard Virtual Card issuance, PIN-authorized reveal, freeze, and top-up service |
+| `src/services/payday/engine.ts` | `PaydayEngine` — waterfall split execution + BaaS / Card synchronization |
+| `src/features/payday/SubVaultsOverview.tsx` | Sub-Vaults visualizer with progress meters, locked indicators, and deposit modal |
+| `src/features/payday/VirtualCardWidget.tsx` | 3D flippable virtual cards with PIN reveal, freeze toggle, and top-up modal |
+| `src/app/(dashboard)/dashboard/payday/page.tsx` | Autonomous waterfall inflow orchestrator with full lifecycle controls & BaaS widgets |
 | `src/app/(dashboard)/dashboard/ledger/page.tsx` | Searchable transaction telemetry feed with CSV export |
 | `src/app/(dashboard)/dashboard/intelligence/page.tsx` | Subscriptions radar, envelope budgeting, and debt payoff simulator |
 | `src/app/(admin)/admin/health/page.tsx` | Dark-forest system health console for CBN & bank API telemetry |

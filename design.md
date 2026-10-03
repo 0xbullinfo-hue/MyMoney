@@ -101,6 +101,20 @@ Instead, MyMoney is built around **05 Earthy Minimal**:
   - Card Container: `#243025` with `#3C4B3D` borders.
   - Accent Telemetry: Glowing sage `#8EA27E` and alert amber/terracotta `#C96F4F`.
 
+### 4.7 Bridgecard 3D Virtual Cards (`VirtualCardWidget.tsx`)
+- **Card Form Factor:** Realistic 1.58:1 banking card ratio with 3D CSS perspective (`perspective: 1000px`, `transform-style: preserve-3d`).
+- **Flip Motion:** Smooth 180° rotation on click with backface visibility culling.
+- **Card Themes:**
+  - `earthy_forest`: `#1B251D` to `#2E3A2F` gradient with metallic gold foil accents.
+  - `terracotta_sand`: `#8C4329` to `#C96F4F` gradient with warm copper accents.
+  - `obsidian_gold`: `#141715` to `#2F352E` dark obsidian glass with gold rimming.
+- **Security Decryption:** Frosted frozen overlay with pulse icon on freeze; PIN-authenticated unmasking with verified green badge.
+
+### 4.8 Anchor BaaS Sub-Vault Ledger Cards (`SubVaultsOverview.tsx`)
+- **Master Pool Bar:** Consolidated Providus / Anchor BaaS virtual NUBAN with aggregate liquidity count.
+- **Progress Trackers:** Sub-vaults feature sleek pill-shaped progress bars matching the vault theme color (`#2E3A2F`, `#C96F4F`, `#6B7F5B`).
+- **Lock Badges:** Time-locked envelopes (Rent/School fees) feature amber lock chips with exact maturation unlock dates.
+
 ---
 
 ## 5. Micro-Animations & Interactions

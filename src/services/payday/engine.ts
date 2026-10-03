@@ -82,7 +82,9 @@ export async function executePaydaySplits(
           amount: allocAmount,
           reference: `TX-FIX-${Date.now()}-${rule.id.substring(0, 4)}`,
           paymentSource: receivingBank,
-          token: rule.autoCardTopup ? `BC_TOPUP_${Math.round(allocAmount / 1500)}` : undefined,
+          token: rule.autoCardTopup
+            ? `BC_TOPUP_${Math.floor(100 + Math.random() * 900)}_USD${Math.round(allocAmount / 1500)}`
+            : undefined,
           status: 'success',
         });
       }
@@ -106,7 +108,15 @@ export async function executePaydaySplits(
         amount: cappedAmount,
         reference: `TX-PCT-${Date.now()}-${rule.id.substring(0, 4)}`,
         paymentSource: receivingBank,
-        token: rule.autoBillPay ? `8491-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}` : undefined,
+        // Generate realistic 4-group 16-digit electricity token (DDDD-DDDD-DDDD-DDDD)
+        token: rule.autoBillPay
+          ? [
+              Math.floor(1000 + Math.random() * 9000),
+              Math.floor(1000 + Math.random() * 9000),
+              Math.floor(1000 + Math.random() * 9000),
+              Math.floor(1000 + Math.random() * 9000),
+            ].join('-')
+          : undefined,
         status: 'success',
       });
     }
@@ -140,6 +150,41 @@ export async function executePaydaySplits(
     breakdown,
     createdAt: new Date().toISOString(),
   };
+
+  // Synchronize Anchor BaaS Sub-Vaults and Bridgecard Virtual Cards
+  try {
+    const { AnchorWalletService } = await import('@/services/wallet/anchor.service');
+    const { BridgecardService } = await import('@/services/cards/bridgecard.service');
+
+    const splitsForAnchor = receipts
+      .filter((r) => r.status === 'success')
+      .map((r) => ({
+        vaultId: r.billerRef,
+        amountKobo: Math.round(r.amount * 100),
+        narration: `Payday Waterfall: ${r.billName}`,
+      }));
+
+    await AnchorWalletService.allocateInflow(
+      config.userId || 'usr_adekunle_01',
+      Math.round(inflowAmount * 100),
+      splitsForAnchor
+    );
+
+    // Auto-top-up primary USD card if subscription split was active
+    const cardReceipt = receipts.find((r) => r.token && r.token.startsWith('BC_TOPUP_'));
+    if (cardReceipt) {
+      const cards = await BridgecardService.getUserCards(config.userId || 'usr_adekunle_01');
+      const activeUsdCard = cards.find((c) => c.currency === 'USD' && c.status === 'ACTIVE');
+      if (activeUsdCard) {
+        const usdTopupUnits = Math.round((cardReceipt.amount / 1500) * 100); // In cents
+        if (usdTopupUnits > 0) {
+          await BridgecardService.topUpCard(activeUsdCard.id, usdTopupUnits, 'vault_sub');
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[PaydayEngine] BaaS / Card sync error:', err);
+  }
 
   // Persist to database if available
   if (isDatabaseConfigured()) {

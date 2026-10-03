@@ -24,7 +24,15 @@ import type {
   PaydayStatus,
   PaydayExecutionLog 
 } from '@/types/payday';
-import { PaydayControlBar, RuleEditorModal, PaydayAuditLog } from '@/features/payday';
+import type { CentralWallet } from '@/types/wallet';
+import type { VirtualCard } from '@/types/cards';
+import { 
+  PaydayControlBar, 
+  RuleEditorModal, 
+  PaydayAuditLog, 
+  SubVaultsOverview, 
+  VirtualCardWidget 
+} from '@/features/payday';
 
 const DEMO_OTP = '849210';
 
@@ -43,6 +51,31 @@ export default function PaydayHubPage() {
   const [cards, setCards] = useState<UserCardItem[]>(initialUserCards);
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // ═══ Anchor BaaS & Bridgecard Virtual Cards State ═══
+  const [centralWallet, setCentralWallet] = useState<CentralWallet | null>(null);
+  const [virtualCards, setVirtualCards] = useState<VirtualCard[]>([]);
+
+  const fetchWalletAndCards = async () => {
+    try {
+      const [wRes, cRes] = await Promise.all([
+        fetch('/api/wallet').then((r) => r.json()),
+        fetch('/api/cards').then((r) => r.json()),
+      ]);
+      if (wRes.success && wRes.data?.wallet) {
+        setCentralWallet(wRes.data.wallet);
+      }
+      if (cRes.success && cRes.data) {
+        setVirtualCards(cRes.data);
+      }
+    } catch (e) {
+      console.error('Failed to load wallet/cards:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchWalletAndCards();
+  }, []);
 
   // ═══ User Lifecycle & Automation State ═══
   const [paydayConfig, setPaydayConfig] = useState<PaydayConfig>(initialPaydayConfig);
@@ -160,6 +193,10 @@ export default function PaydayHubPage() {
           if (json.data.bypassReason === 'USER_SKIPPED_NEXT') {
             setPaydayConfig((prev) => ({ ...prev, skipNextInflow: false }));
           }
+        } else {
+          // Inflow scheduled for execution; refresh wallet and cards state
+          setTimeout(() => fetchWalletAndCards(), 2000);
+          setTimeout(() => fetchWalletAndCards(), 31000);
         }
       }
     } catch (e) {
@@ -452,6 +489,27 @@ export default function PaydayHubPage() {
           </div>
           <div className="text-[11px] text-on-surface-variant">Remaining money swept into Stanbic MMF</div>
         </div>
+      </div>
+
+      {/* ═══ Anchor BaaS Sub-Vaults Overview ═══ */}
+      {centralWallet && (
+        <div className="print:hidden">
+          <SubVaultsOverview 
+            wallet={centralWallet} 
+            onRefresh={fetchWalletAndCards}
+          />
+        </div>
+      )}
+
+      {/* ═══ Bridgecard Virtual Cards Engine ═══ */}
+      <div className="print:hidden">
+        <VirtualCardWidget 
+          cards={virtualCards} 
+          onRefresh={fetchWalletAndCards}
+          onCardUpdated={(updated) => {
+            setVirtualCards((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+          }}
+        />
       </div>
 
       {/* ═══ Action Cards: Spread Horizontally Across Layout ═══ */}

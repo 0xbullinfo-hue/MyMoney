@@ -89,14 +89,24 @@
 - [x] Enhanced `PaydayAuditLog` with copyable `CopyableToken` component — auto-detects electricity token, Bridgecard top-up ref, or service token; clipboard copy with visual confirmation.
 - [x] Added per-log `⬇ Invoice` download button on executed logs, surfacing full receipt + token delivery in print-ready format.
 
+### Milestone 9: BaaS Financing Ledger (Anchor) & Virtual Cards (Bridgecard)
+- [x] Created `src/types/wallet.ts` for Anchor BaaS Central Financing Wallet, Sub-Vaults (`Subscription_Vault`, `Utility_Vault`, `Locked_Custom_Vaults`), and double-entry ledger transactions.
+- [x] Created `src/types/cards.ts` for Bridgecard Virtual Cards (USD/NGN, Visa/Mastercard), masked PAN, decrypted credentials, and card activity.
+- [x] Built `AnchorWalletService` (`src/services/wallet/anchor.service.ts`) with sub-vault journals, credit/debit ledger entries, and consolidated balance calculation.
+- [x] Built `BridgecardService` (`src/services/cards/bridgecard.service.ts`) with programmatic USD/NGN card issuance, PIN-authorized credential decryption, 1-tap freeze/unfreeze, and sub-vault auto-funding.
+- [x] Integrated Anchor BaaS and Bridgecard directly into `PaydayEngine.executePaydaySplits()` (`src/services/payday/engine.ts`).
+- [x] Built authenticated API routes: `/api/wallet` (GET/POST), `/api/cards` (GET/POST), `/api/cards/[cardId]/toggle-freeze` (PATCH), `/api/cards/[cardId]/top-up` (POST), `/api/cards/[cardId]/reveal` (POST), `/api/cards/[cardId]/transactions` (GET).
+- [x] Built `SubVaultsOverview` component (`src/features/payday/SubVaultsOverview.tsx`) visualizing consolidated financing pool, sub-vault progress, locking mechanisms, and ad-hoc deposit modal.
+- [x] Built `VirtualCardWidget` component (`src/features/payday/VirtualCardWidget.tsx`) with 3D flip animation, masked/revealed PAN, PIN security modal, 1-click clipboard copy, freeze overlay, and card issuance modal.
+- [x] Integrated `SubVaultsOverview` and `VirtualCardWidget` into `/dashboard/payday` page with dynamic balance synchronization.
+
 ---
 
 ## 3. Active & Immediate Tasks
 
 - [x] Provide the 6 requested documentation files (`prd.md`, `architecture.md`, `rules.md`, `design.md`, `tasks.md`, `memory.md`) reflecting the complete MyMoney project.
-- [x] Rename application name from "MyMoney OS" to "MyMoney" across all code and documentation.
-- [x] Push changes to remote repository (`origin/main`).
-- [x] Ensure full alignment between codebase features and documentation.
+- [x] Implement Phase 1 (Anchor BaaS Sub-Vaults) and Phase 2 (Bridgecard Virtual Cards) from the Billam automated allocation blueprint.
+- [x] Verify zero TypeScript errors and test authenticated API workflows.
 
 ---
 
